@@ -107,51 +107,51 @@ const GemPanel: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
+        className="mb-6 sm:mb-8"
       >
         <Card variant="elevated">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-soft">
-                  <span className="text-primary-foreground font-bold text-2xl">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-soft flex-shrink-0">
+                  <span className="text-primary-foreground font-bold text-xl sm:text-2xl">
                     {gem.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <div>
-                  <h1 className="text-2xl font-bold text-foreground">{gem.name}</h1>
-                  <div className="flex flex-wrap items-center gap-3 mt-2">
-                    <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
-                      <Phone className="w-4 h-4" />
-                      <span>{gem.phone}</span>
+                <div className="min-w-0">
+                  <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">{gem.name}</h1>
+                  <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-1 sm:gap-3 mt-1 sm:mt-2">
+                    <div className="flex items-center gap-1.5 text-muted-foreground text-xs sm:text-sm">
+                      <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="truncate">{gem.phone}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
-                      <Mail className="w-4 h-4" />
-                      <span>{gem.email}</span>
+                    <div className="flex items-center gap-1.5 text-muted-foreground text-xs sm:text-sm">
+                      <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="truncate">{gem.email}</span>
                     </div>
                   </div>
                 </div>
               </div>
               
-              <Button variant="gradient" onClick={() => setShowCreateTask(true)}>
+              <Button variant="gradient" className="w-full sm:w-auto" onClick={() => setShowCreateTask(true)}>
                 <Plus className="w-5 h-5 mr-2" />
                 Create Task
               </Button>
             </div>
 
             {/* Quick Stats */}
-            <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-border">
+            <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border">
               <div className="text-center">
-                <p className="text-2xl font-bold text-foreground">{presentTasks.length}</p>
-                <p className="text-sm text-muted-foreground">Today</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{presentTasks.length}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Today</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-foreground">{futureTasks.length}</p>
-                <p className="text-sm text-muted-foreground">Upcoming</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{futureTasks.length}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Upcoming</p>
               </div>
               <div className="text-center">
-                <p className="text-2xl font-bold text-foreground">{tasks.filter(t => t.status === 'completed').length}</p>
-                <p className="text-sm text-muted-foreground">Completed</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{tasks.filter(t => t.status === 'completed').length}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Completed</p>
               </div>
             </div>
           </CardContent>

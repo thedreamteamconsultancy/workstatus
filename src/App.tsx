@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import GemPanel from "./pages/GemPanel";
 import GemDashboard from "./pages/GemDashboard";
+import ClientsPage from "./pages/ClientsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/gem/:gemId" element={<GemPanel />} />
+              <Route path="/admin/clients" element={<ClientsPage />} />
               <Route path="/gem-dashboard" element={<GemDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

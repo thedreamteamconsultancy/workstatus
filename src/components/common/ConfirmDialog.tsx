@@ -32,7 +32,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-background/80 backdrop-blur-sm"
           onClick={onClose}
         >
           <motion.div
@@ -43,31 +43,31 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             className="w-full max-w-md"
           >
             <Card variant="elevated">
-              <CardHeader className="relative text-center pb-2">
+              <CardHeader className="relative text-center pb-2 p-4 sm:p-6">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-4 top-4"
+                  className="absolute right-2 sm:right-4 top-2 sm:top-4"
                   onClick={onClose}
                 >
                   <X className="w-5 h-5" />
                 </Button>
-                <div className={`w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center ${variant === 'danger' ? 'bg-destructive/10' : 'bg-warning/10'}`}>
-                  <AlertTriangle className={`w-7 h-7 ${variant === 'danger' ? 'text-destructive' : 'text-warning'}`} />
+                <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl mx-auto mb-3 sm:mb-4 flex items-center justify-center ${variant === 'danger' ? 'bg-destructive/10' : 'bg-warning/10'}`}>
+                  <AlertTriangle className={`w-6 h-6 sm:w-7 sm:h-7 ${variant === 'danger' ? 'text-destructive' : 'text-warning'}`} />
                 </div>
-                <CardTitle className="text-xl">{title}</CardTitle>
+                <CardTitle className="text-lg sm:text-xl">{title}</CardTitle>
               </CardHeader>
               
-              <CardContent className="text-center">
-                <p className="text-muted-foreground mb-6">{message}</p>
-                <div className="flex gap-3">
-                  <Button variant="outline" onClick={onClose} className="flex-1">
+              <CardContent className="text-center p-4 sm:p-6 pt-0 sm:pt-0">
+                <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">{message}</p>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                  <Button variant="outline" onClick={onClose} className="flex-1 order-2 sm:order-1">
                     {cancelText}
                   </Button>
                   <Button 
                     variant={variant === 'danger' ? 'destructive' : 'warning'} 
                     onClick={onConfirm} 
-                    className="flex-1"
+                    className="flex-1 order-1 sm:order-2"
                   >
                     {confirmText}
                   </Button>

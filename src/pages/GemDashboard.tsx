@@ -46,26 +46,26 @@ const GemDashboard: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
+        className="mb-6 sm:mb-8"
       >
         <Card variant="elevated" className="overflow-hidden border-primary/20">
           <CardContent className="p-0">
-            <div className="relative bg-gradient-hero text-primary-foreground p-6 lg:p-8">
+            <div className="relative bg-gradient-hero text-primary-foreground p-4 sm:p-6 lg:p-8">
               {/* Background decorations */}
               <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+                <div className="absolute top-0 right-0 w-32 sm:w-64 h-32 sm:h-64 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                <div className="absolute bottom-0 left-0 w-24 sm:w-48 h-24 sm:h-48 bg-primary/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
               </div>
               
               <div className="relative z-10">
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="w-5 h-5 text-warning" />
-                  <span className="text-sm text-primary-foreground/80">Good to see you!</span>
+                <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-warning" />
+                  <span className="text-xs sm:text-sm text-primary-foreground/80">Good to see you!</span>
                 </div>
-                <h1 className="text-3xl lg:text-4xl font-bold mb-3">
+                <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold mb-2 sm:mb-3">
                   Welcome back, {user?.name || 'Gem'}
                 </h1>
-                <p className="text-primary-foreground/80 text-lg max-w-2xl">
+                <p className="text-primary-foreground/80 text-sm sm:text-base lg:text-lg max-w-2xl line-clamp-3 sm:line-clamp-none">
                   "{randomQuote}"
                 </p>
               </div>
@@ -75,7 +75,7 @@ const GemDashboard: React.FC = () => {
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <StatsCard
           title="Today's Tasks"
           value={presentTasks.length}
@@ -112,7 +112,7 @@ const GemDashboard: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <h2 className="text-xl font-semibold text-foreground mb-4">Your Tasks</h2>
+        <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-3 sm:mb-4">Your Tasks</h2>
         <TaskTabs
           presentTasks={presentTasks}
           futureTasks={futureTasks}

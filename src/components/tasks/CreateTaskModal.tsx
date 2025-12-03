@@ -73,7 +73,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 bg-background/80 backdrop-blur-sm overflow-y-auto"
           onClick={onClose}
         >
           <motion.div
@@ -81,29 +81,29 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg my-8"
+            className="w-full max-w-lg my-4 sm:my-8"
           >
-            <Card variant="elevated" className="border-primary/20">
-              <CardHeader className="relative">
+            <Card variant="elevated" className="border-primary/20 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+              <CardHeader className="relative p-4 sm:p-6">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-4 top-4"
+                  className="absolute right-2 sm:right-4 top-2 sm:top-4"
                   onClick={onClose}
                 >
                   <X className="w-5 h-5" />
                 </Button>
-                <div className="w-14 h-14 rounded-2xl bg-gradient-primary flex items-center justify-center mb-4 shadow-soft">
-                  <FileText className="w-7 h-7 text-primary-foreground" />
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-primary flex items-center justify-center mb-3 sm:mb-4 shadow-soft">
+                  <FileText className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground" />
                 </div>
-                <CardTitle className="text-2xl">Create Task</CardTitle>
-                <p className="text-muted-foreground">Assign a new task to {gemName}</p>
+                <CardTitle className="text-xl sm:text-2xl">Create Task</CardTitle>
+                <p className="text-sm sm:text-base text-muted-foreground">Assign a new task to {gemName}</p>
               </CardHeader>
               
-              <CardContent>
+              <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="title">Task Title</Label>
+                    <Label htmlFor="title" className="text-sm">Task Title</Label>
                     <Input
                       id="title"
                       value={title}
@@ -113,9 +113,9 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="deadline">Deadline Date</Label>
+                      <Label htmlFor="deadline" className="text-sm">Deadline Date</Label>
                       <div className="relative">
                         <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
@@ -130,7 +130,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="time">Time</Label>
+                      <Label htmlFor="time" className="text-sm">Time</Label>
                       <Input
                         id="time"
                         type="time"
@@ -142,7 +142,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="priority">Priority</Label>
+                    <Label htmlFor="priority" className="text-sm">Priority</Label>
                     <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select priority" />
@@ -156,7 +156,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description" className="text-sm">Description</Label>
                     <Textarea
                       id="description"
                       value={description}
@@ -167,7 +167,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="assetUrl">Assets URL (optional)</Label>
+                    <Label htmlFor="assetUrl" className="text-sm">Assets URL (optional)</Label>
                     <div className="relative">
                       <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -181,7 +181,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="uploadUrl">Upload URL (optional)</Label>
+                    <Label htmlFor="uploadUrl" className="text-sm">Upload URL (optional)</Label>
                     <div className="relative">
                       <Upload className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -194,11 +194,11 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                     </div>
                   </div>
 
-                  <div className="flex gap-3 pt-4">
-                    <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                    <Button type="button" variant="outline" onClick={onClose} className="flex-1 order-2 sm:order-1">
                       Cancel
                     </Button>
-                    <Button type="submit" variant="gradient" className="flex-1" disabled={loading}>
+                    <Button type="submit" variant="gradient" className="flex-1 order-1 sm:order-2" disabled={loading}>
                       {loading ? 'Creating...' : 'Create Task'}
                     </Button>
                   </div>

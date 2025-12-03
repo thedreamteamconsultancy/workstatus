@@ -33,14 +33,14 @@ export const StatsCard: React.FC<StatsCardProps> = ({
       transition={{ delay: index * 0.1 }}
     >
       <Card variant="elevated" className="overflow-hidden">
-        <CardContent className="p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">{title}</p>
-              <p className="text-3xl font-bold text-foreground">{value}</p>
+        <CardContent className="p-3 sm:p-5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-0.5 sm:mb-1 truncate">{title}</p>
+              <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-foreground truncate">{value}</p>
             </div>
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${variantStyles[variant]}`}>
-              <Icon className="w-6 h-6" />
+            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${variantStyles[variant]}`}>
+              <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
           </div>
         </CardContent>

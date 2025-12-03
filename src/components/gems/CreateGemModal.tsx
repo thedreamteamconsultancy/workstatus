@@ -52,7 +52,7 @@ export const CreateGemModal: React.FC<CreateGemModalProps> = ({ isOpen, onClose,
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 bg-background/80 backdrop-blur-sm overflow-y-auto"
           onClick={onClose}
         >
           <motion.div
@@ -60,29 +60,29 @@ export const CreateGemModal: React.FC<CreateGemModalProps> = ({ isOpen, onClose,
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.95, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md"
+            className="w-full max-w-md my-4 sm:my-8"
           >
-            <Card variant="elevated" className="border-primary/20">
-              <CardHeader className="relative">
+            <Card variant="elevated" className="border-primary/20 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
+              <CardHeader className="relative p-4 sm:p-6">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="absolute right-4 top-4"
+                  className="absolute right-2 sm:right-4 top-2 sm:top-4"
                   onClick={onClose}
                 >
                   <X className="w-5 h-5" />
                 </Button>
-                <div className="w-14 h-14 rounded-2xl bg-gradient-primary flex items-center justify-center mb-4 shadow-soft">
-                  <User className="w-7 h-7 text-primary-foreground" />
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-primary flex items-center justify-center mb-3 sm:mb-4 shadow-soft">
+                  <User className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground" />
                 </div>
-                <CardTitle className="text-2xl">Create New Gem</CardTitle>
-                <p className="text-muted-foreground">Add a new team member to your workspace</p>
+                <CardTitle className="text-xl sm:text-2xl">Create New Gem</CardTitle>
+                <p className="text-sm sm:text-base text-muted-foreground">Add a new team member to your workspace</p>
               </CardHeader>
               
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
+              <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
+                <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="name" className="text-sm">Full Name</Label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -96,8 +96,8 @@ export const CreateGemModal: React.FC<CreateGemModalProps> = ({ isOpen, onClose,
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="phone" className="text-sm">Phone Number</Label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -111,8 +111,8 @@ export const CreateGemModal: React.FC<CreateGemModalProps> = ({ isOpen, onClose,
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="email" className="text-sm">Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -127,8 +127,8 @@ export const CreateGemModal: React.FC<CreateGemModalProps> = ({ isOpen, onClose,
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="password" className="text-sm">Password</Label>
                     <div className="flex gap-2">
                       <div className="relative flex-1">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -141,17 +141,17 @@ export const CreateGemModal: React.FC<CreateGemModalProps> = ({ isOpen, onClose,
                           required
                         />
                       </div>
-                      <Button type="button" variant="secondary" onClick={generatePassword}>
+                      <Button type="button" variant="secondary" onClick={generatePassword} className="text-sm px-3">
                         Generate
                       </Button>
                     </div>
                   </div>
 
-                  <div className="flex gap-3 pt-4">
-                    <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-3 sm:pt-4">
+                    <Button type="button" variant="outline" onClick={onClose} className="flex-1 order-2 sm:order-1">
                       Cancel
                     </Button>
-                    <Button type="submit" variant="gradient" className="flex-1" disabled={loading}>
+                    <Button type="submit" variant="gradient" className="flex-1 order-1 sm:order-2" disabled={loading}>
                       {loading ? 'Creating...' : 'Create Gem'}
                     </Button>
                   </div>
