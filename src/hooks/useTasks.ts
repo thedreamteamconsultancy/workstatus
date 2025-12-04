@@ -41,12 +41,28 @@ export const useTasks = (gemId?: string) => {
   const createTask = async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const now = Timestamp.now();
-      await addDoc(collection(db, 'tasks'), {
-        ...taskData,
+      
+      // Filter out undefined values - Firebase doesn't accept undefined
+      const cleanedData: Record<string, any> = {
+        gemId: taskData.gemId,
+        title: taskData.title,
+        description: taskData.description,
+        priority: taskData.priority,
+        status: taskData.status,
         deadline: Timestamp.fromDate(taskData.deadline),
         createdAt: now,
         updatedAt: now,
-      });
+      };
+      
+      // Only add optional URL fields if they have a value
+      if (taskData.assetUrl && taskData.assetUrl.trim() !== '') {
+        cleanedData.assetUrl = taskData.assetUrl.trim();
+      }
+      if (taskData.uploadUrl && taskData.uploadUrl.trim() !== '') {
+        cleanedData.uploadUrl = taskData.uploadUrl.trim();
+      }
+      
+      await addDoc(collection(db, 'tasks'), cleanedData);
       
       toast({
         title: "Task Created",
