@@ -1,13 +1,22 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Building2, Phone, DollarSign, Users, Plus, Video, Image, Eye, Calendar, Trash2 } from 'lucide-react';
+import { X, Building2, Phone, DollarSign, Users, Plus, Video, Image, Eye, Calendar, Trash2, CheckCircle2, Clock, Target, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Client, Gem, ProjectType, DigitalMarketingCost } from '@/types';
+import { Progress } from '@/components/ui/progress';
+import { Client, Gem, ProjectType, DigitalMarketingCost, CommitmentType } from '@/types';
+
+interface ClientProgress {
+  realVideo: { completed: number; verified: number; total: number };
+  aiVideo: { completed: number; verified: number; total: number };
+  poster: { completed: number; verified: number; total: number };
+  digitalMarketing: { completed: number; verified: number; total: number };
+  other: { completed: number; verified: number; total: number };
+}
 
 interface ClientDetailModalProps {
   client: Client | null;
@@ -16,6 +25,7 @@ interface ClientDetailModalProps {
   onAddDigitalMarketingCost: (clientId: string, cost: Omit<DigitalMarketingCost, 'id'>) => void;
   onUpdateTravellingCharges: (clientId: string, amount: number) => void;
   gems: Gem[];
+  progress?: ClientProgress;
 }
 
 const PROJECT_TYPE_LABELS: Record<ProjectType, string> = {
@@ -33,7 +43,8 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
   onClose,
   onAddDigitalMarketingCost,
   onUpdateTravellingCharges,
-  gems
+  gems,
+  progress
 }) => {
   const [newCostAmount, setNewCostAmount] = useState('');
   const [newCostDescription, setNewCostDescription] = useState('');
@@ -151,6 +162,120 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                         <p className="text-2xl font-bold text-foreground">{client.socialMediaCommitment.digitalMarketingViews}</p>
                         <p className="text-xs text-muted-foreground">Views/Video</p>
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Project Progress - Shows verified tasks progress */}
+                {client.projectType === 'social_media_management' && client.socialMediaCommitment && progress && (
+                  <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <Target className="w-4 h-4 text-emerald-500" />
+                      Delivery Progress
+                      <Badge variant="outline" className="ml-auto text-xs">
+                        <ShieldCheck className="w-3 h-3 mr-1" />
+                        Verified Tasks Only
+                      </Badge>
+                    </h3>
+                    <div className="space-y-4">
+                      {/* Real Videos Progress */}
+                      {client.socialMediaCommitment.realVideos > 0 && (
+                        <div>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="flex items-center gap-2">
+                              <Video className="w-4 h-4 text-primary" />
+                              Real Videos
+                            </span>
+                            <span className="font-medium">
+                              {progress.realVideo.verified} / {client.socialMediaCommitment.realVideos}
+                              {progress.realVideo.completed > progress.realVideo.verified && (
+                                <span className="text-muted-foreground text-xs ml-1">
+                                  ({progress.realVideo.completed - progress.realVideo.verified} pending verification)
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <Progress 
+                            value={(progress.realVideo.verified / client.socialMediaCommitment.realVideos) * 100} 
+                            className="h-2"
+                          />
+                        </div>
+                      )}
+                      
+                      {/* AI Videos Progress */}
+                      {client.socialMediaCommitment.aiVideos > 0 && (
+                        <div>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="flex items-center gap-2">
+                              <Video className="w-4 h-4 text-warning" />
+                              AI Videos
+                            </span>
+                            <span className="font-medium">
+                              {progress.aiVideo.verified} / {client.socialMediaCommitment.aiVideos}
+                              {progress.aiVideo.completed > progress.aiVideo.verified && (
+                                <span className="text-muted-foreground text-xs ml-1">
+                                  ({progress.aiVideo.completed - progress.aiVideo.verified} pending verification)
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <Progress 
+                            value={(progress.aiVideo.verified / client.socialMediaCommitment.aiVideos) * 100} 
+                            className="h-2"
+                          />
+                        </div>
+                      )}
+                      
+                      {/* Posters Progress */}
+                      {client.socialMediaCommitment.posters > 0 && (
+                        <div>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="flex items-center gap-2">
+                              <Image className="w-4 h-4 text-success" />
+                              Posters
+                            </span>
+                            <span className="font-medium">
+                              {progress.poster.verified} / {client.socialMediaCommitment.posters}
+                              {progress.poster.completed > progress.poster.verified && (
+                                <span className="text-muted-foreground text-xs ml-1">
+                                  ({progress.poster.completed - progress.poster.verified} pending verification)
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                          <Progress 
+                            value={(progress.poster.verified / client.socialMediaCommitment.posters) * 100} 
+                            className="h-2"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Overall Progress Summary */}
+                    <div className="mt-4 pt-3 border-t border-emerald-500/20">
+                      {(() => {
+                        const totalTarget = 
+                          (client.socialMediaCommitment?.realVideos || 0) + 
+                          (client.socialMediaCommitment?.aiVideos || 0) + 
+                          (client.socialMediaCommitment?.posters || 0);
+                        const totalVerified = 
+                          progress.realVideo.verified + 
+                          progress.aiVideo.verified + 
+                          progress.poster.verified;
+                        const percentage = totalTarget > 0 ? Math.round((totalVerified / totalTarget) * 100) : 0;
+                        
+                        return (
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">Overall Progress</span>
+                            <Badge 
+                              variant={percentage >= 100 ? 'success' : percentage >= 50 ? 'warning' : 'secondary'}
+                              className="text-sm"
+                            >
+                              {percentage}% Complete
+                            </Badge>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}

@@ -7,6 +7,7 @@ import { TaskDetailModal } from '@/components/tasks/TaskDetailModal';
 import { StatsCard } from '@/components/common/StatsCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { useTasks } from '@/hooks/useTasks';
+import { useClients } from '@/hooks/useClients';
 import { useAuth } from '@/contexts/AuthContext';
 import { Task, TaskStatus } from '@/types';
 
@@ -28,12 +29,20 @@ const GemDashboard: React.FC = () => {
     presentTasks, 
     futureTasks, 
     pastTasks, 
-    updateTaskStatus 
+    updateTaskStatus,
+    updateCompletedQuantity 
   } = useTasks(user?.role === 'gem' ? user.id : undefined);
+
+  const { clients } = useClients();
 
   const handleUpdateStatus = async (taskId: string, status: TaskStatus) => {
     await updateTaskStatus(taskId, status);
     setSelectedTask(prev => prev ? { ...prev, status } : null);
+  };
+
+  const handleUpdateCompletedQuantity = async (taskId: string, completedQuantity: number) => {
+    await updateCompletedQuantity(taskId, completedQuantity);
+    setSelectedTask(prev => prev ? { ...prev, completedQuantity } : null);
   };
 
   const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
@@ -118,6 +127,7 @@ const GemDashboard: React.FC = () => {
           futureTasks={futureTasks}
           pastTasks={pastTasks}
           onTaskClick={setSelectedTask}
+          clients={clients}
         />
       </motion.div>
 
@@ -127,7 +137,9 @@ const GemDashboard: React.FC = () => {
         isOpen={!!selectedTask}
         onClose={() => setSelectedTask(null)}
         onUpdateStatus={handleUpdateStatus}
+        onUpdateCompletedQuantity={handleUpdateCompletedQuantity}
         canUpdateStatus={true}
+        clients={clients}
       />
     </Layout>
   );

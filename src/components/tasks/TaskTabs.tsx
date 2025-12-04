@@ -3,13 +3,14 @@ import { motion } from 'framer-motion';
 import { Calendar, Clock, History } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { TaskCard } from './TaskCard';
-import { Task, TaskCategory } from '@/types';
+import { Task, TaskCategory, Client } from '@/types';
 
 interface TaskTabsProps {
   presentTasks: Task[];
   futureTasks: Task[];
   pastTasks: Task[];
   onTaskClick: (task: Task) => void;
+  clients?: Client[];
 }
 
 const EmptyState: React.FC<{ category: TaskCategory }> = ({ category }) => {
@@ -39,6 +40,7 @@ export const TaskTabs: React.FC<TaskTabsProps> = ({
   futureTasks,
   pastTasks,
   onTaskClick,
+  clients = [],
 }) => {
   return (
     <Tabs defaultValue="present" className="w-full">
@@ -76,7 +78,7 @@ export const TaskTabs: React.FC<TaskTabsProps> = ({
         {presentTasks.length > 0 ? (
           <div className="space-y-2 sm:space-y-3">
             {presentTasks.map((task, index) => (
-              <TaskCard key={task.id} task={task} onClick={onTaskClick} index={index} />
+              <TaskCard key={task.id} task={task} onClick={onTaskClick} index={index} clients={clients} />
             ))}
           </div>
         ) : (
@@ -88,7 +90,7 @@ export const TaskTabs: React.FC<TaskTabsProps> = ({
         {futureTasks.length > 0 ? (
           <div className="space-y-2 sm:space-y-3">
             {futureTasks.map((task, index) => (
-              <TaskCard key={task.id} task={task} onClick={onTaskClick} index={index} />
+              <TaskCard key={task.id} task={task} onClick={onTaskClick} index={index} clients={clients} />
             ))}
           </div>
         ) : (
@@ -100,7 +102,7 @@ export const TaskTabs: React.FC<TaskTabsProps> = ({
         {pastTasks.length > 0 ? (
           <div className="space-y-2 sm:space-y-3">
             {pastTasks.map((task, index) => (
-              <TaskCard key={task.id} task={task} onClick={onTaskClick} index={index} />
+              <TaskCard key={task.id} task={task} onClick={onTaskClick} index={index} clients={clients} />
             ))}
           </div>
         ) : (

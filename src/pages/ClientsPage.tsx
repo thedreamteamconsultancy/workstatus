@@ -34,6 +34,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useClients } from '@/hooks/useClients';
 import { useGems } from '@/hooks/useGems';
+import { useTasks } from '@/hooks/useTasks';
 import { Client, Transaction } from '@/types';
 
 const ClientsPage: React.FC = () => {
@@ -53,6 +54,7 @@ const ClientsPage: React.FC = () => {
     getFinancialSummary 
   } = useClients();
   const { gems } = useGems();
+  const { getClientProgress } = useTasks();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -415,6 +417,7 @@ const ClientsPage: React.FC = () => {
         onAddDigitalMarketingCost={handleAddDigitalMarketingCost}
         onUpdateTravellingCharges={handleUpdateTravellingCharges}
         gems={gems}
+        progress={selectedClient ? getClientProgress(selectedClient.id) : undefined}
       />
 
       <AddTransactionModal

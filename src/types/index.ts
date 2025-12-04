@@ -33,6 +33,31 @@ export interface Gem {
   userId?: string;
 }
 
+// Commitment types for tracking project progress
+export type CommitmentType = 'realVideo' | 'aiVideo' | 'poster' | 'digitalMarketing' | 'other';
+
+// Predefined work types
+export type WorkType = 
+  | 'Create Jewellery AI Video'
+  | 'Create AI Ad'
+  | 'Scripting'
+  | 'Shooting'
+  | 'Editing'
+  | 'Uploading'
+  | 'Digital Marketing'
+  | 'Other';
+
+export const WORK_TYPES: WorkType[] = [
+  'Create Jewellery AI Video',
+  'Create AI Ad',
+  'Scripting',
+  'Shooting',
+  'Editing',
+  'Uploading',
+  'Digital Marketing',
+  'Other',
+];
+
 export interface Task {
   id: string;
   gemId: string;
@@ -43,9 +68,37 @@ export interface Task {
   status: TaskStatus;
   assetUrl?: string;
   uploadUrl?: string;
+  // Client linking fields
+  clientId?: string;
+  commitmentType?: CommitmentType;
+  quantity?: number; // Number of deliverables (videos, posters, etc.)
+  completedQuantity?: number; // How many the gem has actually completed
+  adminVerified?: boolean;
+  // Delay tracking
+  delayedAt?: Date; // When the task was marked as delayed
+  autoDelayed?: boolean; // Whether it was auto-marked as delayed
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Helper to get unit label based on commitment type
+export const getCommitmentUnitLabel = (type: CommitmentType, count: number): string => {
+  const singular: Record<CommitmentType, string> = {
+    realVideo: 'video',
+    aiVideo: 'video',
+    poster: 'poster',
+    digitalMarketing: 'view',
+    other: 'item',
+  };
+  const plural: Record<CommitmentType, string> = {
+    realVideo: 'videos',
+    aiVideo: 'videos',
+    poster: 'posters',
+    digitalMarketing: 'views',
+    other: 'items',
+  };
+  return count === 1 ? singular[type] : plural[type];
+};
 
 export interface AuthState {
   user: User | null;

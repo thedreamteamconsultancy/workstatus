@@ -1,17 +1,18 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Clock, AlertTriangle, CheckCircle2, Timer, ExternalLink } from 'lucide-react';
+import { Clock, AlertTriangle, CheckCircle2, Timer, ExternalLink, Building2, ShieldCheck, Hash } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Task, TaskPriority, TaskStatus } from '@/types';
-import { formatDistanceToNow, format, isPast, isToday } from 'date-fns';
+import { Task, TaskPriority, TaskStatus, Client, getCommitmentUnitLabel } from '@/types';
+import { CompactCountdownTimer } from '@/components/common/CountdownTimer';
 
 interface TaskCardProps {
   task: Task;
   onClick: (task: Task) => void;
   index: number;
   compact?: boolean;
+  clients?: Client[];
 }
 
 const priorityConfig: Record<TaskPriority, { icon: React.ReactNode; label: string }> = {
@@ -27,19 +28,9 @@ const statusConfig: Record<TaskStatus, { label: string; variant: 'pending' | 'on
   delayed: { label: 'Delayed', variant: 'delayed' },
 };
 
-export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, index, compact = false }) => {
-  const getTimeRemaining = () => {
-    const deadline = new Date(task.deadline);
-    if (isPast(deadline) && !isToday(deadline)) {
-      return { text: 'Overdue', isOverdue: true };
-    }
-    if (isToday(deadline)) {
-      return { text: `Due ${format(deadline, 'h:mm a')}`, isOverdue: false };
-    }
-    return { text: formatDistanceToNow(deadline, { addSuffix: true }), isOverdue: false };
-  };
-
-  const timeInfo = getTimeRemaining();
+export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, index, compact = false, clients = [] }) => {
+  const linkedClient = task.clientId ? clients.find(c => c.id === task.clientId) : null;
+  const isCompleted = task.status === 'completed';
 
   return (
     <motion.div
@@ -54,9 +45,26 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, index, compac
       >
         <CardContent className={compact ? "p-3 sm:p-4" : "p-4 sm:p-5"}>
           <div className="flex items-start justify-between gap-2 sm:gap-3 mb-2 sm:mb-3">
-            <h3 className={`font-semibold text-foreground ${compact ? 'text-sm sm:text-base' : 'text-base sm:text-lg'} line-clamp-2`}>
-              {task.title}
-            </h3>
+            <div className="min-w-0 flex-1">
+              <h3 className={`font-semibold text-foreground ${compact ? 'text-sm sm:text-base' : 'text-base sm:text-lg'} line-clamp-2`}>
+                {task.title}
+              </h3>
+              {linkedClient && (
+                <div className="flex items-center gap-1 mt-1 flex-wrap">
+                  <Building2 className="w-3 h-3 text-blue-500" />
+                  <span className="text-xs text-blue-500 truncate">{linkedClient.businessName}</span>
+                  {task.quantity && task.quantity > 1 && task.commitmentType && (
+                    <span className="flex items-center gap-0.5 text-xs text-orange-500 ml-1">
+                      <Hash className="w-3 h-3" />
+                      {task.completedQuantity || 0}/{task.quantity} {getCommitmentUnitLabel(task.commitmentType, task.quantity)}
+                    </span>
+                  )}
+                  {task.adminVerified && (
+                    <ShieldCheck className="w-3 h-3 text-emerald-500 ml-1" />
+                  )}
+                </div>
+              )}
+            </div>
             <Badge 
               variant={task.priority === 'urgent' ? 'urgent' : task.priority === 'medium' ? 'warning' : 'success'}
               className="text-xs flex-shrink-0"
@@ -75,10 +83,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, index, compac
               <Badge variant={statusConfig[task.status].variant} className="text-xs">
                 {statusConfig[task.status].label}
               </Badge>
-              <div className={`flex items-center gap-1 sm:gap-1.5 text-xs ${timeInfo.isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}>
-                <Timer className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                <span className="truncate max-w-[100px] sm:max-w-none">{timeInfo.text}</span>
-              </div>
+              {!isCompleted && (
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  <Timer className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground" />
+                  <CompactCountdownTimer deadline={new Date(task.deadline)} />
+                </div>
+              )}
             </div>
 
             {(task.assetUrl || task.uploadUrl) && (

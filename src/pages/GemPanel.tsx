@@ -8,12 +8,15 @@ import { Layout } from '@/components/layout/Layout';
 import { TaskTabs } from '@/components/tasks/TaskTabs';
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal';
 import { CreateTaskModal } from '@/components/tasks/CreateTaskModal';
+import { EditTaskModal } from '@/components/tasks/EditTaskModal';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useTasks } from '@/hooks/useTasks';
-import { Gem, Task, TaskStatus } from '@/types';
+import { useClients } from '@/hooks/useClients';
+import { Gem, Task, TaskStatus, CommitmentType, TaskPriority } from '@/types';
 
 const GemPanel: React.FC = () => {
   const { gemId } = useParams<{ gemId: string }>();
@@ -23,15 +26,22 @@ const GemPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showCreateTask, setShowCreateTask] = useState(false);
+  const [editTask, setEditTask] = useState<Task | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
 
   const { 
     tasks,
     presentTasks, 
     futureTasks, 
     pastTasks, 
-    createTask, 
-    updateTaskStatus 
+    createTask,
+    updateTask,
+    deleteTask,
+    updateTaskStatus,
+    verifyTask
   } = useTasks(gemId);
+
+  const { clients } = useClients();
 
   useEffect(() => {
     const fetchGem = async () => {
@@ -59,6 +69,9 @@ const GemPanel: React.FC = () => {
     priority: 'low' | 'medium' | 'urgent';
     assetUrl?: string;
     uploadUrl?: string;
+    clientId?: string;
+    commitmentType?: CommitmentType;
+    quantity?: number;
   }) => {
     if (!gemId) return;
     
@@ -72,6 +85,46 @@ const GemPanel: React.FC = () => {
   const handleUpdateStatus = async (taskId: string, status: TaskStatus) => {
     await updateTaskStatus(taskId, status);
     setSelectedTask(prev => prev ? { ...prev, status } : null);
+  };
+
+  const handleVerifyTask = async (taskId: string, verified: boolean) => {
+    await verifyTask(taskId, verified);
+    setSelectedTask(prev => prev ? { ...prev, adminVerified: verified } : null);
+  };
+
+  const handleEditTask = (task: Task) => {
+    setSelectedTask(null);
+    setEditTask(task);
+  };
+
+  const handleUpdateTask = async (taskId: string, data: {
+    title: string;
+    description: string;
+    deadline: Date;
+    priority: TaskPriority;
+    assetUrl?: string;
+    uploadUrl?: string;
+    clientId?: string;
+    commitmentType?: CommitmentType;
+    quantity?: number;
+  }) => {
+    await updateTask(taskId, data);
+    setEditTask(null);
+  };
+
+  const handleDeleteTask = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    if (task) {
+      setSelectedTask(null);
+      setTaskToDelete(task);
+    }
+  };
+
+  const confirmDeleteTask = async () => {
+    if (taskToDelete) {
+      await deleteTask(taskToDelete.id);
+      setTaskToDelete(null);
+    }
   };
 
   if (loading) {
@@ -169,6 +222,7 @@ const GemPanel: React.FC = () => {
           futureTasks={futureTasks}
           pastTasks={pastTasks}
           onTaskClick={setSelectedTask}
+          clients={clients}
         />
       </motion.div>
 
@@ -178,6 +232,11 @@ const GemPanel: React.FC = () => {
         isOpen={!!selectedTask}
         onClose={() => setSelectedTask(null)}
         onUpdateStatus={handleUpdateStatus}
+        onVerifyTask={handleVerifyTask}
+        onEditTask={handleEditTask}
+        onDeleteTask={handleDeleteTask}
+        isAdmin={true}
+        clients={clients}
       />
 
       <CreateTaskModal
@@ -185,6 +244,27 @@ const GemPanel: React.FC = () => {
         onClose={() => setShowCreateTask(false)}
         onSubmit={handleCreateTask}
         gemName={gem.name}
+        clients={clients}
+        existingTasks={tasks}
+      />
+
+      <EditTaskModal
+        task={editTask}
+        isOpen={!!editTask}
+        onClose={() => setEditTask(null)}
+        onSubmit={handleUpdateTask}
+        clients={clients}
+        existingTasks={tasks}
+      />
+
+      <ConfirmDialog
+        isOpen={!!taskToDelete}
+        onClose={() => setTaskToDelete(null)}
+        onConfirm={confirmDeleteTask}
+        title="Delete Task"
+        message={`Are you sure you want to delete "${taskToDelete?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        variant="danger"
       />
     </Layout>
   );

@@ -7,12 +7,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TaskPriority, Client, CommitmentType, WORK_TYPES, WorkType, Task } from '@/types';
+import { Task, TaskPriority, Client, CommitmentType, WORK_TYPES, WorkType } from '@/types';
+import { format } from 'date-fns';
 
-interface CreateTaskModalProps {
+interface EditTaskModalProps {
+  task: Task | null;
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: {
+  onSubmit: (taskId: string, data: {
     title: string;
     description: string;
     deadline: Date;
@@ -23,12 +25,11 @@ interface CreateTaskModalProps {
     commitmentType?: CommitmentType;
     quantity?: number;
   }) => void;
-  gemName: string;
   clients?: Client[];
   existingTasks?: Task[]; // To calculate remaining commitments
 }
 
-export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onSubmit, gemName, clients = [], existingTasks = [] }) => {
+export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onClose, onSubmit, clients = [], existingTasks = [] }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [deadline, setDeadline] = useState('');
@@ -42,14 +43,40 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
   const [quantity, setQuantity] = useState<number>(1);
   const [loading, setLoading] = useState(false);
 
+  // Track if this is initial load to prevent resetting commitment type
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Initialize form with task data when task changes
+  useEffect(() => {
+    if (task) {
+      setIsInitialLoad(true);
+      setTitle(task.title);
+      setDescription(task.description || '');
+      const taskDeadline = new Date(task.deadline);
+      setDeadline(format(taskDeadline, 'yyyy-MM-dd'));
+      setTime(format(taskDeadline, 'HH:mm'));
+      setPriority(task.priority);
+      setAssetUrl(task.assetUrl || '');
+      setUploadUrl(task.uploadUrl || '');
+      setClientId(task.clientId || '');
+      setCommitmentType(task.commitmentType || '');
+      setQuantity(task.quantity || 1);
+      // Set work type if title matches a predefined work type
+      const matchedWorkType = WORK_TYPES.find(wt => wt === task.title);
+      setWorkType(matchedWorkType || '');
+      // Mark initial load complete after a tick
+      setTimeout(() => setIsInitialLoad(false), 0);
+    }
+  }, [task]);
+
   // Get selected client to determine available commitment types
   const selectedClient = clients.find(c => c.id === clientId);
 
-  // Calculate already assigned quantities for each commitment type for the selected client
+  // Calculate already assigned quantities for each commitment type (excluding current task)
   const assignedQuantities = useMemo(() => {
     if (!clientId) return {};
     
-    const clientTasks = existingTasks.filter(t => t.clientId === clientId);
+    const clientTasks = existingTasks.filter(t => t.clientId === clientId && t.id !== task?.id);
     const assigned: Record<CommitmentType, number> = {
       realVideo: 0,
       aiVideo: 0,
@@ -58,14 +85,14 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
       other: 0,
     };
     
-    clientTasks.forEach(task => {
-      if (task.commitmentType) {
-        assigned[task.commitmentType] += task.quantity || 1;
+    clientTasks.forEach(t => {
+      if (t.commitmentType) {
+        assigned[t.commitmentType] += t.quantity || 1;
       }
     });
     
     return assigned;
-  }, [clientId, existingTasks]);
+  }, [clientId, existingTasks, task?.id]);
   
   // Determine available commitment types based on client's project type
   const getAvailableCommitmentTypes = () => {
@@ -98,16 +125,13 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
     return selectedType?.remaining || 0;
   };
 
-  // Reset commitment type and quantity when client changes
+  // Reset commitment type when client changes (but not on initial load)
   useEffect(() => {
-    setCommitmentType('');
-    setQuantity(1);
-  }, [clientId]);
-
-  // Reset quantity when commitment type changes
-  useEffect(() => {
-    setQuantity(1);
-  }, [commitmentType]);
+    if (!isInitialLoad && (!task || clientId !== task.clientId)) {
+      setCommitmentType('');
+      setQuantity(1);
+    }
+  }, [clientId, task, isInitialLoad]);
 
   // Auto-fill title when work type is selected
   const handleWorkTypeChange = (value: string) => {
@@ -123,6 +147,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!task) return;
     
     // Validate quantity doesn't exceed remaining
     const remaining = getRemainingQuantity();
@@ -136,30 +161,42 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
       const deadlineDate = new Date(deadline);
       deadlineDate.setHours(hours, minutes, 0, 0);
 
-      await onSubmit({
+      // Build update data object with required fields
+      const updateData: {
+        title: string;
+        description: string;
+        deadline: Date;
+        priority: TaskPriority;
+        assetUrl?: string;
+        uploadUrl?: string;
+        clientId?: string;
+        commitmentType?: CommitmentType;
+        quantity?: number;
+      } = {
         title,
         description,
         deadline: deadlineDate,
         priority,
-        assetUrl: assetUrl || undefined,
-        uploadUrl: uploadUrl || undefined,
-        clientId: clientId || undefined,
-        commitmentType: commitmentType || undefined,
-        quantity: commitmentType ? quantity : undefined,
-      });
+      };
       
-      // Reset form
-      setTitle('');
-      setDescription('');
-      setDeadline('');
-      setTime('09:00');
-      setPriority('medium');
-      setAssetUrl('');
-      setUploadUrl('');
-      setClientId('');
-      setCommitmentType('');
-      setWorkType('');
-      setQuantity(1);
+      // Only add optional fields if they have values
+      // Firebase doesn't accept undefined values in updateDoc
+      if (assetUrl && assetUrl.trim()) {
+        updateData.assetUrl = assetUrl.trim();
+      }
+      if (uploadUrl && uploadUrl.trim()) {
+        updateData.uploadUrl = uploadUrl.trim();
+      }
+      if (clientId && clientId.trim()) {
+        updateData.clientId = clientId.trim();
+      }
+      if (commitmentType) {
+        updateData.commitmentType = commitmentType;
+        updateData.quantity = quantity;
+      }
+
+      await onSubmit(task.id, updateData);
+      
       onClose();
     } catch (error) {
       console.error(error);
@@ -167,6 +204,8 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
       setLoading(false);
     }
   };
+
+  if (!task) return null;
 
   return (
     <AnimatePresence>
@@ -198,8 +237,8 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                 <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-primary flex items-center justify-center mb-3 sm:mb-4 shadow-soft">
                   <FileText className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground" />
                 </div>
-                <CardTitle className="text-xl sm:text-2xl">Create Task</CardTitle>
-                <p className="text-sm sm:text-base text-muted-foreground">Assign a new task to {gemName}</p>
+                <CardTitle className="text-xl sm:text-2xl">Edit Task</CardTitle>
+                <p className="text-sm sm:text-base text-muted-foreground">Update task details</p>
               </CardHeader>
               
               <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
@@ -267,7 +306,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                                 <SelectValue placeholder="Select type" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="none">Select type</SelectItem>
+                                <SelectItem value="none">No type</SelectItem>
                                 {getAvailableCommitmentTypes().map(ct => (
                                   <SelectItem 
                                     key={ct.value} 
@@ -398,7 +437,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                       Cancel
                     </Button>
                     <Button type="submit" variant="gradient" className="flex-1 order-1 sm:order-2" disabled={loading}>
-                      {loading ? 'Creating...' : 'Create Task'}
+                      {loading ? 'Saving...' : 'Save Changes'}
                     </Button>
                   </div>
                 </form>
