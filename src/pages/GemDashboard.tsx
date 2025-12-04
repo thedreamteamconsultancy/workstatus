@@ -8,6 +8,7 @@ import { StatsCard } from '@/components/common/StatsCard';
 import { Card, CardContent } from '@/components/ui/card';
 import { useTasks } from '@/hooks/useTasks';
 import { useClients } from '@/hooks/useClients';
+import { useGems } from '@/hooks/useGems';
 import { useAuth } from '@/contexts/AuthContext';
 import { Task, TaskStatus } from '@/types';
 
@@ -22,6 +23,10 @@ const motivationalQuotes = [
 const GemDashboard: React.FC = () => {
   const { user } = useAuth();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  
+  // Get gems to find current gem's fixedDriveUrl
+  const { gems } = useGems();
+  const currentGem = gems.find(g => g.id === user?.id);
   
   // Filter tasks by the logged-in gem's ID
   const { 
@@ -140,6 +145,7 @@ const GemDashboard: React.FC = () => {
         onUpdateCompletedQuantity={handleUpdateCompletedQuantity}
         canUpdateStatus={true}
         clients={clients}
+        gemFixedDriveUrl={currentGem?.fixedDriveUrl}
       />
     </Layout>
   );

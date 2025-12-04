@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, FileText, Calendar, Link, Upload, Building2, Target, Hash } from 'lucide-react';
+import { X, FileText, Calendar, Link, Upload, Building2, Target, Hash, HardDrive, FolderSync } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Task, TaskPriority, Client, CommitmentType, WORK_TYPES, WorkType } from '@/types';
+import { Task, TaskPriority, Client, CommitmentType, WORK_TYPES, WorkType, DriveMode } from '@/types';
 import { format } from 'date-fns';
 
 interface EditTaskModalProps {
@@ -19,6 +19,7 @@ interface EditTaskModalProps {
     description: string;
     deadline: Date;
     priority: TaskPriority;
+    driveMode?: DriveMode;
     assetUrl?: string;
     uploadUrl?: string;
     clientId?: string;
@@ -35,6 +36,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
   const [deadline, setDeadline] = useState('');
   const [time, setTime] = useState('09:00');
   const [priority, setPriority] = useState<TaskPriority>('medium');
+  const [driveMode, setDriveMode] = useState<DriveMode>('fixed');
   const [assetUrl, setAssetUrl] = useState('');
   const [uploadUrl, setUploadUrl] = useState('');
   const [clientId, setClientId] = useState<string>('');
@@ -56,6 +58,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
       setDeadline(format(taskDeadline, 'yyyy-MM-dd'));
       setTime(format(taskDeadline, 'HH:mm'));
       setPriority(task.priority);
+      setDriveMode(task.driveMode || 'fixed');
       setAssetUrl(task.assetUrl || '');
       setUploadUrl(task.uploadUrl || '');
       setClientId(task.clientId || '');
@@ -167,6 +170,7 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
         description: string;
         deadline: Date;
         priority: TaskPriority;
+        driveMode?: DriveMode;
         assetUrl?: string;
         uploadUrl?: string;
         clientId?: string;
@@ -177,15 +181,19 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
         description,
         deadline: deadlineDate,
         priority,
+        driveMode,
       };
       
       // Only add optional fields if they have values
       // Firebase doesn't accept undefined values in updateDoc
-      if (assetUrl && assetUrl.trim()) {
-        updateData.assetUrl = assetUrl.trim();
-      }
-      if (uploadUrl && uploadUrl.trim()) {
-        updateData.uploadUrl = uploadUrl.trim();
+      // Only include URLs if drive mode is dynamic
+      if (driveMode === 'dynamic') {
+        if (assetUrl && assetUrl.trim()) {
+          updateData.assetUrl = assetUrl.trim();
+        }
+        if (uploadUrl && uploadUrl.trim()) {
+          updateData.uploadUrl = uploadUrl.trim();
+        }
       }
       if (clientId && clientId.trim()) {
         updateData.clientId = clientId.trim();
@@ -404,33 +412,77 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="assetUrl" className="text-sm">Assets URL (optional)</Label>
-                    <div className="relative">
-                      <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="assetUrl"
-                        value={assetUrl}
-                        onChange={(e) => setAssetUrl(e.target.value)}
-                        placeholder="https://drive.google.com/..."
-                        className="pl-10"
-                      />
+                  {/* Drive Mode Selection */}
+                  <div className="space-y-3">
+                    <Label className="text-sm flex items-center gap-2">
+                      <HardDrive className="w-4 h-4" />
+                      Drive Mode
+                    </Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        type="button"
+                        variant={driveMode === 'fixed' ? 'default' : 'outline'}
+                        className={`h-auto py-2.5 px-3 flex flex-col items-center gap-1 ${driveMode === 'fixed' ? 'ring-2 ring-primary' : ''}`}
+                        onClick={() => setDriveMode('fixed')}
+                      >
+                        <HardDrive className="w-4 h-4" />
+                        <span className="text-xs font-medium">Fixed Drive</span>
+                        <span className="text-[10px] text-muted-foreground text-center leading-tight">
+                          Use gem's assigned folder
+                        </span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={driveMode === 'dynamic' ? 'default' : 'outline'}
+                        className={`h-auto py-2.5 px-3 flex flex-col items-center gap-1 ${driveMode === 'dynamic' ? 'ring-2 ring-primary' : ''}`}
+                        onClick={() => setDriveMode('dynamic')}
+                      >
+                        <FolderSync className="w-4 h-4" />
+                        <span className="text-xs font-medium">Dynamic Drive</span>
+                        <span className="text-[10px] text-muted-foreground text-center leading-tight">
+                          Custom URLs for this task
+                        </span>
+                      </Button>
                     </div>
+                    {driveMode === 'fixed' && (
+                      <p className="text-xs text-muted-foreground bg-secondary/50 p-2 rounded-lg">
+                        💡 The gem will use their pre-assigned Google Drive folder for assets and uploads.
+                      </p>
+                    )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="uploadUrl" className="text-sm">Upload URL (optional)</Label>
-                    <div className="relative">
-                      <Upload className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="uploadUrl"
-                        value={uploadUrl}
-                        onChange={(e) => setUploadUrl(e.target.value)}
-                        placeholder="https://drive.google.com/..."
-                        className="pl-10"
-                      />
-                    </div>
-                  </div>
+                  {/* Dynamic Drive URLs - Only show when Dynamic mode is selected */}
+                  {driveMode === 'dynamic' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="assetUrl" className="text-sm">Assets URL</Label>
+                        <div className="relative">
+                          <Link className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            id="assetUrl"
+                            value={assetUrl}
+                            onChange={(e) => setAssetUrl(e.target.value)}
+                            placeholder="https://drive.google.com/..."
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="uploadUrl" className="text-sm">Upload URL</Label>
+                        <div className="relative">
+                          <Upload className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            id="uploadUrl"
+                            value={uploadUrl}
+                            onChange={(e) => setUploadUrl(e.target.value)}
+                            placeholder="https://drive.google.com/..."
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
 
                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     <Button type="button" variant="outline" onClick={onClose} className="flex-1 order-2 sm:order-1">

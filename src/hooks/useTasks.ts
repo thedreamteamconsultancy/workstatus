@@ -92,16 +92,19 @@ export const useTasks = (gemId?: string) => {
         priority: taskData.priority,
         status: taskData.status,
         deadline: Timestamp.fromDate(taskData.deadline),
+        driveMode: taskData.driveMode || 'fixed', // Default to fixed drive
         createdAt: now,
         updatedAt: now,
       };
       
-      // Only add optional URL fields if they have a value
-      if (taskData.assetUrl && taskData.assetUrl.trim() !== '') {
-        cleanedData.assetUrl = taskData.assetUrl.trim();
-      }
-      if (taskData.uploadUrl && taskData.uploadUrl.trim() !== '') {
-        cleanedData.uploadUrl = taskData.uploadUrl.trim();
+      // Only add URL fields if drive mode is dynamic and they have a value
+      if (taskData.driveMode === 'dynamic') {
+        if (taskData.assetUrl && taskData.assetUrl.trim() !== '') {
+          cleanedData.assetUrl = taskData.assetUrl.trim();
+        }
+        if (taskData.uploadUrl && taskData.uploadUrl.trim() !== '') {
+          cleanedData.uploadUrl = taskData.uploadUrl.trim();
+        }
       }
       
       // Add client linking fields if provided

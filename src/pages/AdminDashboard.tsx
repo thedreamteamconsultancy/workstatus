@@ -5,6 +5,7 @@ import { Plus, Search, Users, CheckCircle, Clock, AlertTriangle, Building2, Doll
 import { Layout } from '@/components/layout/Layout';
 import { GemCard } from '@/components/gems/GemCard';
 import { CreateGemModal } from '@/components/gems/CreateGemModal';
+import { EditGemModal } from '@/components/gems/EditGemModal';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { StatsCard } from '@/components/common/StatsCard';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -17,11 +18,12 @@ import { Gem } from '@/types';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { gems, loading: gemsLoading, createGem, deleteGem } = useGems();
+  const { gems, loading: gemsLoading, createGem, updateGem, deleteGem } = useGems();
   const { tasks, presentTasks, futureTasks, pastTasks } = useTasks();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [gemToEdit, setGemToEdit] = useState<Gem | null>(null);
   const [gemToDelete, setGemToDelete] = useState<Gem | null>(null);
 
   const filteredGems = gems.filter(gem =>
@@ -33,8 +35,13 @@ const AdminDashboard: React.FC = () => {
     navigate(`/admin/gem/${gem.id}`);
   };
 
-  const handleCreateGem = async (data: { name: string; phone: string; email: string; password: string }) => {
+  const handleCreateGem = async (data: { name: string; phone: string; email: string; password: string; fixedDriveUrl?: string }) => {
     await createGem(data);
+  };
+
+  const handleEditGem = async (gemId: string, data: { name: string; phone: string; fixedDriveUrl?: string }) => {
+    await updateGem(gemId, data);
+    setGemToEdit(null);
   };
 
   const handleDeleteGem = async () => {
@@ -157,6 +164,7 @@ const AdminDashboard: React.FC = () => {
               key={gem.id}
               gem={gem}
               onOpen={handleOpenGem}
+              onEdit={setGemToEdit}
               onDelete={setGemToDelete}
               index={index}
             />
@@ -191,6 +199,13 @@ const AdminDashboard: React.FC = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleCreateGem}
+      />
+
+      <EditGemModal
+        gem={gemToEdit}
+        isOpen={!!gemToEdit}
+        onClose={() => setGemToEdit(null)}
+        onSubmit={handleEditGem}
       />
 
       <ConfirmDialog

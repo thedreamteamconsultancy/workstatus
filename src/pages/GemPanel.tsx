@@ -237,6 +237,7 @@ const GemPanel: React.FC = () => {
         onDeleteTask={handleDeleteTask}
         isAdmin={true}
         clients={clients}
+        gemFixedDriveUrl={gem?.fixedDriveUrl}
       />
 
       <CreateTaskModal

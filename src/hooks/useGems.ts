@@ -66,15 +66,23 @@ export const useGems = () => {
       // Sign out from secondary auth immediately
       await secondaryAuth.signOut();
       
-      // Store gem in Firestore with the auth user's UID as the document ID
-      await setDoc(doc(db, 'gems', userId), {
+      // Build gem data object
+      const gemDocData: Record<string, any> = {
         name: gemData.name,
         phone: gemData.phone,
         email: gemData.email,
         password: gemData.password, // Note: In production, don't store passwords in Firestore
         userId: userId,
         createdAt: Timestamp.now(),
-      });
+      };
+      
+      // Add fixedDriveUrl if provided
+      if (gemData.fixedDriveUrl && gemData.fixedDriveUrl.trim()) {
+        gemDocData.fixedDriveUrl = gemData.fixedDriveUrl.trim();
+      }
+      
+      // Store gem in Firestore with the auth user's UID as the document ID
+      await setDoc(doc(db, 'gems', userId), gemDocData);
       
       toast({
         title: "Gem Created",

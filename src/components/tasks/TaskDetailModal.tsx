@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Clock, ExternalLink, Upload, AlertTriangle, CheckCircle2, Loader2, Timer, Building2, Target, ShieldCheck, ShieldOff, Pencil, Trash2, Hash, AlertCircle } from 'lucide-react';
+import { X, Calendar, Clock, ExternalLink, Upload, AlertTriangle, CheckCircle2, Loader2, Timer, Building2, Target, ShieldCheck, ShieldOff, Pencil, Trash2, Hash, AlertCircle, HardDrive, FolderSync } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +20,7 @@ interface TaskDetailModalProps {
   canUpdateStatus?: boolean;
   isAdmin?: boolean;
   clients?: Client[];
+  gemFixedDriveUrl?: string; // The gem's pre-assigned drive folder URL
 }
 
 const statusConfig: Record<TaskStatus, { label: string; icon: React.ReactNode; variant: 'pending' | 'ongoing' | 'completed' | 'delayed' }> = {
@@ -54,7 +55,8 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   onUpdateCompletedQuantity,
   canUpdateStatus = true,
   isAdmin = false,
-  clients = []
+  clients = [],
+  gemFixedDriveUrl
 }) => {
   const [localCompletedQty, setLocalCompletedQty] = React.useState<number>(0);
 
@@ -248,31 +250,54 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                   </div>
                 )}
 
-                {/* Links */}
-                {(task.assetUrl || task.uploadUrl) && (
-                  <div className="flex flex-col gap-2 sm:gap-3">
-                    {task.assetUrl && (
-                      <Button
-                        variant="outline"
-                        className="w-full text-sm"
-                        onClick={() => window.open(task.assetUrl, '_blank')}
-                      >
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        View Assets
-                      </Button>
-                    )}
-                    {task.uploadUrl && (
-                      <Button
-                        variant="outline"
-                        className="w-full text-sm"
-                        onClick={() => window.open(task.uploadUrl, '_blank')}
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload Files
-                      </Button>
-                    )}
-                  </div>
-                )}
+                {/* Drive Mode & Links */}
+                <div className="space-y-3">
+                  {/* Fixed Drive - Show clickable button */}
+                  {(!task.driveMode || task.driveMode === 'fixed') && (
+                    <div className="flex flex-col gap-2">
+                      {gemFixedDriveUrl ? (
+                        <Button
+                          variant="outline"
+                          className="w-full text-sm bg-emerald-500/10 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/20"
+                          onClick={() => window.open(gemFixedDriveUrl, '_blank')}
+                        >
+                          <HardDrive className="w-4 h-4 mr-2" />
+                          Your Work Drive
+                        </Button>
+                      ) : (
+                        <p className="text-xs text-muted-foreground text-center py-2">
+                          No drive folder assigned. Contact admin to set up your work drive.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Dynamic Drive Links */}
+                  {task.driveMode === 'dynamic' && (task.assetUrl || task.uploadUrl) && (
+                    <div className="flex flex-col gap-2 sm:gap-3">
+                      {task.assetUrl && (
+                        <Button
+                          variant="outline"
+                          className="w-full text-sm"
+                          onClick={() => window.open(task.assetUrl, '_blank')}
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          View Assets
+                        </Button>
+                      )}
+                      {task.uploadUrl && (
+                        <Button
+                          variant="outline"
+                          className="w-full text-sm"
+                          onClick={() => window.open(task.uploadUrl, '_blank')}
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload Files
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {/* Completed Quantity Update - For gems with quantity-based tasks */}
                 {!isAdmin && canUpdateStatus && task.quantity && task.quantity > 1 && task.commitmentType && onUpdateCompletedQuantity && (

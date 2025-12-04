@@ -1,35 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, User, Phone, Lock, Mail, HardDrive } from 'lucide-react';
+import { X, User, Phone, HardDrive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Gem } from '@/types';
 
-interface CreateGemModalProps {
+interface EditGemModalProps {
+  gem: Gem | null;
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { name: string; phone: string; email: string; password: string; fixedDriveUrl?: string }) => void;
+  onSubmit: (gemId: string, data: { name: string; phone: string; fixedDriveUrl?: string }) => void;
 }
 
-export const CreateGemModal: React.FC<CreateGemModalProps> = ({ isOpen, onClose, onSubmit }) => {
+export const EditGemModal: React.FC<EditGemModalProps> = ({ gem, isOpen, onClose, onSubmit }) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [fixedDriveUrl, setFixedDriveUrl] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Initialize form when gem changes
+  useEffect(() => {
+    if (gem) {
+      setName(gem.name);
+      setPhone(gem.phone);
+      setFixedDriveUrl(gem.fixedDriveUrl || '');
+    }
+  }, [gem]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!gem) return;
+    
     setLoading(true);
     try {
-      await onSubmit({ name, phone, email, password, fixedDriveUrl: fixedDriveUrl || undefined });
-      setName('');
-      setPhone('');
-      setEmail('');
-      setPassword('');
-      setFixedDriveUrl('');
+      await onSubmit(gem.id, { 
+        name, 
+        phone, 
+        fixedDriveUrl: fixedDriveUrl.trim() || undefined 
+      });
       onClose();
     } catch (error) {
       console.error(error);
@@ -38,14 +48,7 @@ export const CreateGemModal: React.FC<CreateGemModalProps> = ({ isOpen, onClose,
     }
   };
 
-  const generatePassword = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-    let result = '';
-    for (let i = 0; i < 8; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setPassword(result);
-  };
+  if (!gem) return null;
 
   return (
     <AnimatePresence>
@@ -77,8 +80,8 @@ export const CreateGemModal: React.FC<CreateGemModalProps> = ({ isOpen, onClose,
                 <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-primary flex items-center justify-center mb-3 sm:mb-4 shadow-soft">
                   <User className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground" />
                 </div>
-                <CardTitle className="text-xl sm:text-2xl">Create New Gem</CardTitle>
-                <p className="text-sm sm:text-base text-muted-foreground">Add a new team member to your workspace</p>
+                <CardTitle className="text-xl sm:text-2xl">Edit Gem</CardTitle>
+                <p className="text-sm sm:text-base text-muted-foreground">Update gem information</p>
               </CardHeader>
               
               <CardContent className="p-4 sm:p-6 pt-0 sm:pt-0">
@@ -114,43 +117,7 @@ export const CreateGemModal: React.FC<CreateGemModalProps> = ({ isOpen, onClose,
                   </div>
 
                   <div className="space-y-1.5 sm:space-y-2">
-                    <Label htmlFor="email" className="text-sm">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="john@company.com"
-                        className="pl-10"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <Label htmlFor="password" className="text-sm">Password</Label>
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input
-                          id="password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="••••••••"
-                          className="pl-10 font-mono"
-                          required
-                        />
-                      </div>
-                      <Button type="button" variant="secondary" onClick={generatePassword} className="text-sm px-3">
-                        Generate
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <Label htmlFor="fixedDriveUrl" className="text-sm">Fixed Drive Folder URL (optional)</Label>
+                    <Label htmlFor="fixedDriveUrl" className="text-sm">Fixed Drive Folder URL</Label>
                     <div className="relative">
                       <HardDrive className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
@@ -171,7 +138,7 @@ export const CreateGemModal: React.FC<CreateGemModalProps> = ({ isOpen, onClose,
                       Cancel
                     </Button>
                     <Button type="submit" variant="gradient" className="flex-1 order-1 sm:order-2" disabled={loading}>
-                      {loading ? 'Creating...' : 'Create Gem'}
+                      {loading ? 'Saving...' : 'Save Changes'}
                     </Button>
                   </div>
                 </form>

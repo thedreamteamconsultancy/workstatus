@@ -6,6 +6,8 @@ export type TaskPriority = 'low' | 'medium' | 'urgent';
 
 export type TaskCategory = 'present' | 'future' | 'past';
 
+export type DriveMode = 'fixed' | 'dynamic';
+
 export type ProjectType = 
   | 'website' 
   | 'social_media_management' 
@@ -29,6 +31,7 @@ export interface Gem {
   phone: string;
   email: string;
   password: string;
+  fixedDriveUrl?: string; // Pre-created Google Drive folder URL for this gem
   createdAt: Date;
   userId?: string;
 }
@@ -66,6 +69,7 @@ export interface Task {
   deadline: Date;
   priority: TaskPriority;
   status: TaskStatus;
+  driveMode?: DriveMode; // 'fixed' uses gem's pre-assigned folder, 'dynamic' uses custom URLs
   assetUrl?: string;
   uploadUrl?: string;
   // Client linking fields
