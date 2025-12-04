@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, User, Phone, Mail } from 'lucide-react';
+import { ArrowLeft, Plus, User, Phone, Mail, MessageCircle, Send, HardDrive } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Layout } from '@/components/layout/Layout';
@@ -11,12 +11,40 @@ import { CreateTaskModal } from '@/components/tasks/CreateTaskModal';
 import { EditTaskModal } from '@/components/tasks/EditTaskModal';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { WhatsAppMessageModal } from '@/components/common/WhatsAppMessageModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useTasks } from '@/hooks/useTasks';
 import { useClients } from '@/hooks/useClients';
 import { Gem, Task, TaskStatus, CommitmentType, TaskPriority } from '@/types';
+
+// Key for saving custom messages in localStorage
+const CUSTOM_MESSAGES_KEY = 'workstatus_custom_messages';
+
+// WhatsApp utility functions
+const formatPhoneNumber = (phone: string) => {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.startsWith('91') && digits.length === 12) {
+    return digits;
+  }
+  if (digits.length === 10) {
+    return '91' + digits;
+  }
+  return digits;
+};
+
+const openWhatsAppChat = (phone: string) => {
+  const phoneNumber = formatPhoneNumber(phone);
+  window.open(`https://wa.me/${phoneNumber}`, '_blank');
+};
+
+const sendCredentialsMessage = (gem: { name: string; email: string; phone: string }) => {
+  const phoneNumber = formatPhoneNumber(gem.phone);
+  const message = `🌟 *Welcome to the Team, ${gem.name.split(' ')[0]}!* 🌟\n\nWe're thrilled to have you onboard! Your talent and dedication are about to shine. 💎\n\n🔐 *Your Login Credentials*\n\n🌐 Platform: https://worktracking-drab.vercel.app/\n📧 Email: ${gem.email}\n🔑 Password: ${gem.phone}\n\n✨ Pro Tips:\n• Bookmark the platform link for easy access\n• Keep your credentials safe and private\n• Check your dashboard daily for new tasks\n\nYou've got this! Let's achieve greatness together! 🚀\n\nBest regards,\nThe Dream Team 💜`;
+  const encodedMessage = encodeURIComponent(message);
+  window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+};
 
 const GemPanel: React.FC = () => {
   const { gemId } = useParams<{ gemId: string }>();
@@ -28,6 +56,22 @@ const GemPanel: React.FC = () => {
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [messageTask, setMessageTask] = useState<Task | null>(null);
+  const [savedCustomMessages, setSavedCustomMessages] = useState<string[]>([]);
+
+  // Load saved custom messages from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem(CUSTOM_MESSAGES_KEY);
+    if (saved) {
+      setSavedCustomMessages(JSON.parse(saved));
+    }
+  }, []);
+
+  const handleSaveCustomMessage = (message: string) => {
+    const updated = [...savedCustomMessages, message].slice(-10); // Keep last 10 messages
+    setSavedCustomMessages(updated);
+    localStorage.setItem(CUSTOM_MESSAGES_KEY, JSON.stringify(updated));
+  };
 
   const { 
     tasks,
@@ -192,6 +236,39 @@ const GemPanel: React.FC = () => {
               </Button>
             </div>
 
+            {/* Action Icon Buttons */}
+            <div className="flex items-center gap-2 mt-4 flex-wrap">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 bg-green-500/10 border-green-500/30 text-green-600 hover:bg-green-500/20 hover:text-green-700"
+                onClick={() => sendCredentialsMessage(gem)}
+                title="Send Credentials"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 bg-green-500/10 border-green-500/30 text-green-600 hover:bg-green-500/20 hover:text-green-700"
+                onClick={() => openWhatsAppChat(gem.phone)}
+                title="Chat on WhatsApp"
+              >
+                <MessageCircle className="w-4 h-4" />
+              </Button>
+              {gem.fixedDriveUrl && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 bg-blue-500/10 border-blue-500/30 text-blue-600 hover:bg-blue-500/20 hover:text-blue-700"
+                  onClick={() => window.open(gem.fixedDriveUrl, '_blank')}
+                  title="Open Drive"
+                >
+                  <HardDrive className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+
             {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border">
               <div className="text-center">
@@ -222,6 +299,8 @@ const GemPanel: React.FC = () => {
           futureTasks={futureTasks}
           pastTasks={pastTasks}
           onTaskClick={setSelectedTask}
+          onTaskMessage={setMessageTask}
+          showMessageButton={true}
           clients={clients}
         />
       </motion.div>
@@ -267,6 +346,17 @@ const GemPanel: React.FC = () => {
         confirmText="Delete"
         variant="danger"
       />
+
+      {messageTask && gem && (
+        <WhatsAppMessageModal
+          isOpen={!!messageTask}
+          onClose={() => setMessageTask(null)}
+          task={messageTask}
+          gem={gem}
+          savedCustomMessages={savedCustomMessages}
+          onSaveCustomMessage={handleSaveCustomMessage}
+        />
+      )}
     </Layout>
   );
 };

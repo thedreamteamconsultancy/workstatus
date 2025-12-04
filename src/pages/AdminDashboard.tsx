@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Users, CheckCircle, Clock, AlertTriangle, Building2, DollarSign } from 'lucide-react';
+import { Plus, Search, Users, CheckCircle, Clock, AlertTriangle, Building2, DollarSign, Filter, TrendingUp, TrendingDown, Loader2, Hourglass } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { GemCard } from '@/components/gems/GemCard';
 import { CreateGemModal } from '@/components/gems/CreateGemModal';
@@ -12,9 +12,48 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useGems } from '@/hooks/useGems';
 import { useTasks } from '@/hooks/useTasks';
-import { Gem } from '@/types';
+import { Gem, Task } from '@/types';
+
+type GemFilter = 'all' | 'top-performers' | 'low-performers' | 'has-pending' | 'has-ongoing' | 'has-completed' | 'has-delayed';
+
+// Helper to calculate gem performance metrics
+const calculateGemMetrics = (gemId: string, tasks: Task[]) => {
+  const gemTasks = tasks.filter(t => t.gemId === gemId);
+  const completedTasks = gemTasks.filter(t => t.status === 'completed');
+  const pendingTasks = gemTasks.filter(t => t.status === 'pending');
+  const ongoingTasks = gemTasks.filter(t => t.status === 'ongoing');
+  const delayedTasks = gemTasks.filter(t => t.status === 'delayed');
+  
+  // Calculate on-time completion rate
+  const onTimeCompleted = completedTasks.filter(t => {
+    // If task was completed before or on deadline
+    const completedDate = t.updatedAt;
+    const deadline = t.deadline;
+    return completedDate <= deadline;
+  }).length;
+  
+  const completionRate = completedTasks.length > 0 
+    ? (onTimeCompleted / completedTasks.length) * 100 
+    : 0;
+  
+  // Performance score: weighted combination of completed tasks and on-time rate
+  const performanceScore = (completedTasks.length * 10) + (completionRate * 0.5) - (delayedTasks.length * 5);
+  
+  return {
+    totalTasks: gemTasks.length,
+    completedCount: completedTasks.length,
+    pendingCount: pendingTasks.length,
+    ongoingCount: ongoingTasks.length,
+    delayedCount: delayedTasks.length,
+    onTimeCompletedCount: onTimeCompleted,
+    completionRate,
+    performanceScore,
+    hasActiveTasks: pendingTasks.length > 0 || ongoingTasks.length > 0 || delayedTasks.length > 0,
+  };
+};
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -22,14 +61,67 @@ const AdminDashboard: React.FC = () => {
   const { tasks, presentTasks, futureTasks, pastTasks } = useTasks();
   
   const [searchQuery, setSearchQuery] = useState('');
+  const [gemFilter, setGemFilter] = useState<GemFilter>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [gemToEdit, setGemToEdit] = useState<Gem | null>(null);
   const [gemToDelete, setGemToDelete] = useState<Gem | null>(null);
 
-  const filteredGems = gems.filter(gem =>
-    gem.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    gem.phone.includes(searchQuery)
-  );
+  // Calculate metrics for all gems
+  const gemMetrics = useMemo(() => {
+    const metrics: Record<string, ReturnType<typeof calculateGemMetrics>> = {};
+    gems.forEach(gem => {
+      metrics[gem.id] = calculateGemMetrics(gem.id, tasks);
+    });
+    return metrics;
+  }, [gems, tasks]);
+
+  // Filter and sort gems
+  const filteredAndSortedGems = useMemo(() => {
+    // First, filter by search query
+    let result = gems.filter(gem =>
+      gem.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      gem.phone.includes(searchQuery)
+    );
+
+    // Apply status filter
+    switch (gemFilter) {
+      case 'top-performers':
+        result = result.filter(gem => gemMetrics[gem.id]?.completedCount > 0);
+        result.sort((a, b) => (gemMetrics[b.id]?.performanceScore || 0) - (gemMetrics[a.id]?.performanceScore || 0));
+        break;
+      case 'low-performers':
+        result = result.filter(gem => gemMetrics[gem.id]?.totalTasks > 0);
+        result.sort((a, b) => (gemMetrics[a.id]?.performanceScore || 0) - (gemMetrics[b.id]?.performanceScore || 0));
+        break;
+      case 'has-pending':
+        result = result.filter(gem => gemMetrics[gem.id]?.pendingCount > 0);
+        result.sort((a, b) => (gemMetrics[b.id]?.pendingCount || 0) - (gemMetrics[a.id]?.pendingCount || 0));
+        break;
+      case 'has-ongoing':
+        result = result.filter(gem => gemMetrics[gem.id]?.ongoingCount > 0);
+        result.sort((a, b) => (gemMetrics[b.id]?.ongoingCount || 0) - (gemMetrics[a.id]?.ongoingCount || 0));
+        break;
+      case 'has-completed':
+        result = result.filter(gem => gemMetrics[gem.id]?.completedCount > 0);
+        result.sort((a, b) => (gemMetrics[b.id]?.completedCount || 0) - (gemMetrics[a.id]?.completedCount || 0));
+        break;
+      case 'has-delayed':
+        result = result.filter(gem => gemMetrics[gem.id]?.delayedCount > 0);
+        result.sort((a, b) => (gemMetrics[b.id]?.delayedCount || 0) - (gemMetrics[a.id]?.delayedCount || 0));
+        break;
+      default:
+        // Default: Sort by active tasks (gems with tasks on top), then by performance
+        result.sort((a, b) => {
+          const aHasActive = gemMetrics[a.id]?.hasActiveTasks ? 1 : 0;
+          const bHasActive = gemMetrics[b.id]?.hasActiveTasks ? 1 : 0;
+          if (bHasActive !== aHasActive) return bHasActive - aHasActive;
+          // Secondary sort by total tasks
+          return (gemMetrics[b.id]?.totalTasks || 0) - (gemMetrics[a.id]?.totalTasks || 0);
+        });
+    }
+
+    return result;
+  }, [gems, searchQuery, gemFilter, gemMetrics]);
 
   const handleOpenGem = (gem: Gem) => {
     navigate(`/admin/gem/${gem.id}`);
@@ -139,7 +231,7 @@ const AdminDashboard: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="flex flex-col sm:flex-row gap-4 mb-6"
+        className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6"
       >
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -150,6 +242,56 @@ const AdminDashboard: React.FC = () => {
             className="pl-11"
           />
         </div>
+        <Select value={gemFilter} onValueChange={(value: GemFilter) => setGemFilter(value)}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <Filter className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="Filter gems" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">
+              <span className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                All Gems
+              </span>
+            </SelectItem>
+            <SelectItem value="top-performers">
+              <span className="flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-emerald-500" />
+                Top Performers
+              </span>
+            </SelectItem>
+            <SelectItem value="low-performers">
+              <span className="flex items-center gap-2">
+                <TrendingDown className="w-4 h-4 text-orange-500" />
+                Need Attention
+              </span>
+            </SelectItem>
+            <SelectItem value="has-pending">
+              <span className="flex items-center gap-2">
+                <Hourglass className="w-4 h-4 text-yellow-500" />
+                Has Pending
+              </span>
+            </SelectItem>
+            <SelectItem value="has-ongoing">
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 text-blue-500" />
+                In Progress
+              </span>
+            </SelectItem>
+            <SelectItem value="has-completed">
+              <span className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4 text-emerald-500" />
+                Has Completed
+              </span>
+            </SelectItem>
+            <SelectItem value="has-delayed">
+              <span className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-500" />
+                Has Delayed
+              </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
         <Button variant="gradient" onClick={() => setShowCreateModal(true)}>
           <Plus className="w-5 h-5 mr-2" />
           Create Gem
@@ -157,9 +299,9 @@ const AdminDashboard: React.FC = () => {
       </motion.div>
 
       {/* Gems Grid */}
-      {filteredGems.length > 0 ? (
+      {filteredAndSortedGems.length > 0 ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredGems.map((gem, index) => (
+          {filteredAndSortedGems.map((gem, index) => (
             <GemCard
               key={gem.id}
               gem={gem}
@@ -167,6 +309,7 @@ const AdminDashboard: React.FC = () => {
               onEdit={setGemToEdit}
               onDelete={setGemToDelete}
               index={index}
+              metrics={gemMetrics[gem.id]}
             />
           ))}
         </div>
@@ -180,12 +323,12 @@ const AdminDashboard: React.FC = () => {
             <Users className="w-10 h-10 text-muted-foreground" />
           </div>
           <h3 className="text-xl font-semibold text-foreground mb-2">
-            {searchQuery ? 'No gems found' : 'No gems yet'}
+            {searchQuery || gemFilter !== 'all' ? 'No gems found' : 'No gems yet'}
           </h3>
           <p className="text-muted-foreground mb-6">
-            {searchQuery ? 'Try a different search term' : 'Create your first gem to get started'}
+            {searchQuery || gemFilter !== 'all' ? 'Try a different search or filter' : 'Create your first gem to get started'}
           </p>
-          {!searchQuery && (
+          {!searchQuery && gemFilter === 'all' && (
             <Button variant="gradient" onClick={() => setShowCreateModal(true)}>
               <Plus className="w-5 h-5 mr-2" />
               Create First Gem

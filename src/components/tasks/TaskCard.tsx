@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Clock, AlertTriangle, CheckCircle2, Timer, ExternalLink, Building2, ShieldCheck, Hash } from 'lucide-react';
+import { Clock, AlertTriangle, CheckCircle2, Timer, ExternalLink, Building2, ShieldCheck, Hash, MessageCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,9 +10,11 @@ import { CompactCountdownTimer } from '@/components/common/CountdownTimer';
 interface TaskCardProps {
   task: Task;
   onClick: (task: Task) => void;
+  onMessage?: (task: Task) => void;
   index: number;
   compact?: boolean;
   clients?: Client[];
+  showMessageButton?: boolean;
 }
 
 const priorityConfig: Record<TaskPriority, { icon: React.ReactNode; label: string }> = {
@@ -28,7 +30,7 @@ const statusConfig: Record<TaskStatus, { label: string; variant: 'pending' | 'on
   delayed: { label: 'Delayed', variant: 'delayed' },
 };
 
-export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, index, compact = false, clients = [] }) => {
+export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onMessage, index, compact = false, clients = [], showMessageButton = false }) => {
   const linkedClient = task.clientId ? clients.find(c => c.id === task.clientId) : null;
   const isCompleted = task.status === 'completed';
 
@@ -91,8 +93,22 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, index, compac
               )}
             </div>
 
-            {(task.assetUrl || task.uploadUrl) && (
+            {(task.assetUrl || task.uploadUrl || showMessageButton) && (
               <div className="flex items-center gap-1">
+                {showMessageButton && onMessage && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 sm:h-7 px-1.5 sm:px-2 text-xs bg-green-500/10 hover:bg-green-500/20 text-green-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMessage(task);
+                    }}
+                  >
+                    <MessageCircle className="w-3 h-3" />
+                    <span className="ml-1 hidden sm:inline">Message</span>
+                  </Button>
+                )}
                 {task.assetUrl && (
                   <Button
                     variant="ghost"

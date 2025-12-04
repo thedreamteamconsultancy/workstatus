@@ -10,6 +10,8 @@ interface TaskTabsProps {
   futureTasks: Task[];
   pastTasks: Task[];
   onTaskClick: (task: Task) => void;
+  onTaskMessage?: (task: Task) => void;
+  showMessageButton?: boolean;
   clients?: Client[];
 }
 
@@ -40,6 +42,8 @@ export const TaskTabs: React.FC<TaskTabsProps> = ({
   futureTasks,
   pastTasks,
   onTaskClick,
+  onTaskMessage,
+  showMessageButton = false,
   clients = [],
 }) => {
   return (
@@ -78,7 +82,15 @@ export const TaskTabs: React.FC<TaskTabsProps> = ({
         {presentTasks.length > 0 ? (
           <div className="space-y-2 sm:space-y-3">
             {presentTasks.map((task, index) => (
-              <TaskCard key={task.id} task={task} onClick={onTaskClick} index={index} clients={clients} />
+              <TaskCard 
+                key={task.id} 
+                task={task} 
+                onClick={onTaskClick} 
+                onMessage={onTaskMessage}
+                showMessageButton={showMessageButton}
+                index={index} 
+                clients={clients} 
+              />
             ))}
           </div>
         ) : (
@@ -90,7 +102,15 @@ export const TaskTabs: React.FC<TaskTabsProps> = ({
         {futureTasks.length > 0 ? (
           <div className="space-y-2 sm:space-y-3">
             {futureTasks.map((task, index) => (
-              <TaskCard key={task.id} task={task} onClick={onTaskClick} index={index} clients={clients} />
+              <TaskCard 
+                key={task.id} 
+                task={task} 
+                onClick={onTaskClick} 
+                onMessage={onTaskMessage}
+                showMessageButton={showMessageButton}
+                index={index} 
+                clients={clients} 
+              />
             ))}
           </div>
         ) : (
@@ -102,7 +122,15 @@ export const TaskTabs: React.FC<TaskTabsProps> = ({
         {pastTasks.length > 0 ? (
           <div className="space-y-2 sm:space-y-3">
             {pastTasks.map((task, index) => (
-              <TaskCard key={task.id} task={task} onClick={onTaskClick} index={index} clients={clients} />
+              <TaskCard 
+                key={task.id} 
+                task={task} 
+                onClick={onTaskClick} 
+                onMessage={onTaskMessage}
+                showMessageButton={showMessageButton}
+                index={index} 
+                clients={clients} 
+              />
             ))}
           </div>
         ) : (
