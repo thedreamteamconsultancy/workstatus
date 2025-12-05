@@ -63,7 +63,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, showSidebar = true }) 
           transition={{ duration: 0.4 }}
           className="flex-1 overflow-y-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8"
         >
-          <div className="container mx-auto">
+          <div className="max-w-7xl mx-auto">
             {children}
           </div>
         </motion.main>

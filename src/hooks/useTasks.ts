@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { collection, query, where, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Task, TaskStatus, TaskCategory, CommitmentType } from '@/types';
@@ -41,8 +41,17 @@ export const useTasks = (gemId?: string) => {
   }, [gemId]);
 
   // Auto-mark overdue tasks as delayed
+  // Track tasks being processed to prevent duplicate operations
+  const processingTasksRef = useRef<Set<string>>(new Set());
+  
   const markTaskAsDelayed = useCallback(async (taskId: string) => {
+    // Skip if already processing this task
+    if (processingTasksRef.current.has(taskId)) {
+      return;
+    }
+    
     try {
+      processingTasksRef.current.add(taskId);
       await updateDoc(doc(db, 'tasks', taskId), {
         status: 'delayed',
         priority: 'urgent', // Delayed tasks should always be urgent
@@ -52,6 +61,11 @@ export const useTasks = (gemId?: string) => {
       });
     } catch (error) {
       console.error('Error auto-marking task as delayed:', error);
+    } finally {
+      // Remove from processing set after a delay to prevent rapid re-processing
+      setTimeout(() => {
+        processingTasksRef.current.delete(taskId);
+      }, 5000);
     }
   }, []);
 
