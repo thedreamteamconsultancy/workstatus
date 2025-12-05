@@ -50,6 +50,14 @@ const predefinedMessages: PredefinedMessage[] = [
     variant: 'warning',
   },
   {
+    id: 'delayed',
+    label: 'Delayed Task',
+    icon: <AlertTriangle className="w-4 h-4" />,
+    getMessage: (gemName, taskTitle) => 
+      `Hi ${gemName}! 👋\n\n⚠️ The task "${taskTitle}" is now marked as *DELAYED*.\n\nI understand things can get busy, but this task needs immediate attention. Please prioritize this and let me know:\n\n1. What's blocking you?\n2. When can you complete it?\n3. Do you need any help?\n\nLet's work together to get this done ASAP! I'm here to support you. 💪\n\nPlease update me today. Thank you! 🙏`,
+    variant: 'warning',
+  },
+  {
     id: 'late',
     label: 'Start Working',
     icon: <Sparkles className="w-4 h-4" />,

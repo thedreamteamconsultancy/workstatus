@@ -1,12 +1,16 @@
 import React from 'react';
-import { Moon, Sun, LogOut, User } from 'lucide-react';
+import { Moon, Sun, LogOut, User, Menu } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -25,6 +29,18 @@ export const Header: React.FC = () => {
       <div className="container mx-auto px-3 sm:px-4 lg:px-8">
         <div className="flex h-14 sm:h-16 items-center justify-between">
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Mobile Menu Button */}
+            {onMenuClick && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onMenuClick}
+                className="md:hidden rounded-xl h-8 w-8 sm:h-10 sm:w-10"
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
+            )}
+            
             <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-primary flex items-center justify-center shadow-soft flex-shrink-0">
               <span className="text-primary-foreground font-bold text-base sm:text-lg">W</span>
             </div>

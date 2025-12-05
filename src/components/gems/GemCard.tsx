@@ -38,7 +38,7 @@ const openWhatsAppChat = (phone: string) => {
 
 const sendCredentials = (gem: Gem) => {
   const phoneNumber = formatPhoneNumber(gem.phone);
-  const message = `🌟 *Welcome to the Team, ${gem.name.split(' ')[0]}!* 🌟\n\nWe're thrilled to have you onboard! Your talent and dedication are about to shine. 💎\n\n🔐 *Your Login Credentials*\n\n🌐 Platform: https://worktracking-drab.vercel.app/\n📧 Email: ${gem.email}\n🔑 Password: ${gem.phone}\n\n✨ Pro Tips:\n• Bookmark the platform link for easy access\n• Keep your credentials safe and private\n• Check your dashboard daily for new tasks\n\nYou've got this! Let's achieve greatness together! 🚀\n\nBest regards,\nThe Dream Team 💜`;
+  const message = `🌟 *Welcome to the Team, ${gem.name.split(' ')[0]}!* 🌟\n\nWe're thrilled to have you onboard! Your talent and dedication are about to shine. 💎\n\n🔐 *Your Login Credentials*\n\n🌐 Platform: https://workstatus-dts.vercel.app/\n📧 Email: ${gem.email}\n🔑 Password: ${gem.phone}\n\n✨ Pro Tips:\n• Bookmark the platform link for easy access\n• Keep your credentials safe and private\n• Check your dashboard daily for new tasks\n\nYou've got this! Let's achieve greatness together! 🚀\n\nBest regards,\nThe Dream Team 💜`;
   const encodedMessage = encodeURIComponent(message);
   window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
 };

@@ -55,7 +55,7 @@ const GemDashboard: React.FC = () => {
   const ongoingTasks = tasks.filter(t => t.status === 'ongoing').length;
 
   return (
-    <Layout>
+    <Layout showSidebar={false}>
       {/* Welcome Section */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}

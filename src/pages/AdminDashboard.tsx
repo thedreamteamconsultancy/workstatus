@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Users, CheckCircle, Clock, AlertTriangle, Building2, DollarSign, Filter, TrendingUp, TrendingDown, Loader2, Hourglass } from 'lucide-react';
+import { Plus, Search, Users, CheckCircle, Clock, AlertTriangle, Filter, TrendingUp, TrendingDown, Loader2, Hourglass } from 'lucide-react';
 import { Layout } from '@/components/layout/Layout';
 import { GemCard } from '@/components/gems/GemCard';
 import { CreateGemModal } from '@/components/gems/CreateGemModal';
@@ -11,7 +11,6 @@ import { StatsCard } from '@/components/common/StatsCard';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useGems } from '@/hooks/useGems';
 import { useTasks } from '@/hooks/useTasks';
@@ -19,13 +18,25 @@ import { Gem, Task } from '@/types';
 
 type GemFilter = 'all' | 'top-performers' | 'low-performers' | 'has-pending' | 'has-ongoing' | 'has-completed' | 'has-delayed';
 
+// Helper to normalize status for comparison (handles case variations)
+const normalizeStatus = (status: string | undefined): string => {
+  if (!status) return '';
+  const s = status.toLowerCase().trim();
+  // Map common variations to standard status values
+  if (s === 'in progress' || s === 'in-progress' || s === 'inprogress' || s === 'ongoing') return 'ongoing';
+  if (s === 'complete' || s === 'completed' || s === 'done') return 'completed';
+  if (s === 'pending' || s === 'todo' || s === 'not started') return 'pending';
+  if (s === 'delayed' || s === 'overdue' || s === 'late') return 'delayed';
+  return s;
+};
+
 // Helper to calculate gem performance metrics
 const calculateGemMetrics = (gemId: string, tasks: Task[]) => {
   const gemTasks = tasks.filter(t => t.gemId === gemId);
-  const completedTasks = gemTasks.filter(t => t.status === 'completed');
-  const pendingTasks = gemTasks.filter(t => t.status === 'pending');
-  const ongoingTasks = gemTasks.filter(t => t.status === 'ongoing');
-  const delayedTasks = gemTasks.filter(t => t.status === 'delayed');
+  const completedTasks = gemTasks.filter(t => normalizeStatus(t.status) === 'completed');
+  const pendingTasks = gemTasks.filter(t => normalizeStatus(t.status) === 'pending');
+  const ongoingTasks = gemTasks.filter(t => normalizeStatus(t.status) === 'ongoing');
+  const delayedTasks = gemTasks.filter(t => normalizeStatus(t.status) === 'delayed');
   
   // Calculate on-time completion rate
   const onTimeCompleted = completedTasks.filter(t => {
@@ -143,8 +154,15 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const completedTasks = tasks.filter(t => t.status === 'completed').length;
-  const pendingTasks = tasks.filter(t => t.status === 'pending').length;
+  const completedTasks = tasks.filter(t => normalizeStatus(t.status) === 'completed').length;
+  const pendingTasks = tasks.filter(t => normalizeStatus(t.status) === 'pending').length;
+  const ongoingTasks = tasks.filter(t => normalizeStatus(t.status) === 'ongoing').length;
+  const delayedTasks = tasks.filter(t => normalizeStatus(t.status) === 'delayed').length;
+
+  // Handle stats card click - toggle filter
+  const handleStatsClick = (filter: GemFilter) => {
+    setGemFilter(prev => prev === filter ? 'all' : filter);
+  };
 
   if (gemsLoading) {
     return <LoadingSpinner fullScreen text="Loading dashboard..." />;
@@ -162,8 +180,9 @@ const AdminDashboard: React.FC = () => {
         <p className="text-sm sm:text-base text-muted-foreground">Manage your team and track progress</p>
       </motion.div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+      {/* Stats Grid - Row 1: Total Gems, Today's Tasks, Pending, In Progress */}
+      {/* Stats Grid - Row 2: Completed, Delayed */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <StatsCard
           title="Total Gems"
           value={gems.length}
@@ -175,56 +194,46 @@ const AdminDashboard: React.FC = () => {
           title="Today's Tasks"
           value={presentTasks.length}
           icon={Clock}
-          variant="warning"
+          variant="default"
           index={1}
+        />
+        <StatsCard
+          title="Pending"
+          value={pendingTasks}
+          icon={Hourglass}
+          variant="warning"
+          index={2}
+          onClick={() => handleStatsClick('has-pending')}
+          isActive={gemFilter === 'has-pending'}
+        />
+        <StatsCard
+          title="In Progress"
+          value={ongoingTasks}
+          icon={Loader2}
+          variant="info"
+          index={3}
+          onClick={() => handleStatsClick('has-ongoing')}
+          isActive={gemFilter === 'has-ongoing'}
         />
         <StatsCard
           title="Completed"
           value={completedTasks}
           icon={CheckCircle}
           variant="success"
-          index={2}
+          index={4}
+          onClick={() => handleStatsClick('has-completed')}
+          isActive={gemFilter === 'has-completed'}
         />
         <StatsCard
-          title="Pending"
-          value={pendingTasks}
+          title="Delayed"
+          value={delayedTasks}
           icon={AlertTriangle}
           variant="destructive"
-          index={3}
+          index={5}
+          onClick={() => handleStatsClick('has-delayed')}
+          isActive={gemFilter === 'has-delayed'}
         />
       </div>
-
-      {/* Quick Access Cards */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="mb-6 sm:mb-8"
-      >
-        <Card 
-          variant="elevated" 
-          className="cursor-pointer hover:border-primary/30 transition-colors"
-          onClick={() => navigate('/admin/clients')}
-        >
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-primary flex items-center justify-center shadow-soft flex-shrink-0">
-                  <Building2 className="w-6 h-6 sm:w-7 sm:h-7 text-primary-foreground" />
-                </div>
-                <div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-foreground">Clients & Finance</h3>
-                  <p className="text-sm sm:text-base text-muted-foreground">Manage clients, track revenue and expenses</p>
-                </div>
-              </div>
-              <Button variant="gradient" className="w-full sm:w-auto">
-                <DollarSign className="w-5 h-5 mr-2" />
-                Open
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
 
       {/* Actions Bar */}
       <motion.div
