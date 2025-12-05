@@ -29,9 +29,12 @@ const GemDashboard: React.FC = () => {
   const { gems } = useGems();
   const currentGem = gems.find(g => g.id === user?.id);
   
-  // Only fetch tasks once we have a confirmed gem user ID
-  // This prevents the flash of all tasks before filtering
-  const gemId = user?.role === 'gem' ? user.id : undefined;
+  // Determine if we should skip fetching tasks
+  // Skip if auth is still loading OR if we don't have a valid gem user yet
+  const isGemUser = user?.role === 'gem';
+  const gemId = isGemUser ? user.id : undefined;
+  const shouldSkipFetch = authLoading || !gemId;
+  
   const { 
     tasks,
     loading: tasksLoading,
@@ -40,7 +43,7 @@ const GemDashboard: React.FC = () => {
     pastTasks, 
     updateTaskStatus,
     updateCompletedQuantity 
-  } = useTasks(gemId);
+  } = useTasks({ gemId, skipFetch: shouldSkipFetch });
 
   const { clients } = useClients();
 

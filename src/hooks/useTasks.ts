@@ -5,11 +5,30 @@ import { Task, TaskStatus, TaskCategory, CommitmentType } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { isPast } from 'date-fns';
 
-export const useTasks = (gemId?: string) => {
+interface UseTasksOptions {
+  gemId?: string;
+  skipFetch?: boolean; // When true, don't fetch any tasks (useful when waiting for auth)
+}
+
+export const useTasks = (gemIdOrOptions?: string | UseTasksOptions) => {
+  // Handle both old API (just gemId string) and new API (options object)
+  const options = typeof gemIdOrOptions === 'string' 
+    ? { gemId: gemIdOrOptions, skipFetch: false }
+    : gemIdOrOptions || {};
+  
+  const { gemId, skipFetch = false } = options;
+  
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // If skipFetch is true, don't fetch anything and keep loading true
+    if (skipFetch) {
+      setTasks([]);
+      setLoading(true);
+      return;
+    }
+
     let q;
     if (gemId) {
       q = query(
@@ -38,7 +57,7 @@ export const useTasks = (gemId?: string) => {
     });
 
     return () => unsubscribe();
-  }, [gemId]);
+  }, [gemId, skipFetch]);
 
   // Auto-mark overdue tasks as delayed
   // Track tasks being processed to prevent duplicate operations
