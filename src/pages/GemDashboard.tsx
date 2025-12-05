@@ -5,6 +5,7 @@ import { Layout } from '@/components/layout/Layout';
 import { TaskTabs } from '@/components/tasks/TaskTabs';
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal';
 import { StatsCard } from '@/components/common/StatsCard';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { useTasks } from '@/hooks/useTasks';
 import { useClients } from '@/hooks/useClients';
@@ -21,22 +22,25 @@ const motivationalQuotes = [
 ];
 
 const GemDashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   
   // Get gems to find current gem's fixedDriveUrl
   const { gems } = useGems();
   const currentGem = gems.find(g => g.id === user?.id);
   
-  // Filter tasks by the logged-in gem's ID
+  // Only fetch tasks once we have a confirmed gem user ID
+  // This prevents the flash of all tasks before filtering
+  const gemId = user?.role === 'gem' ? user.id : undefined;
   const { 
     tasks,
+    loading: tasksLoading,
     presentTasks, 
     futureTasks, 
     pastTasks, 
     updateTaskStatus,
     updateCompletedQuantity 
-  } = useTasks(user?.role === 'gem' ? user.id : undefined);
+  } = useTasks(gemId);
 
   const { clients } = useClients();
 
@@ -49,6 +53,11 @@ const GemDashboard: React.FC = () => {
     await updateCompletedQuantity(taskId, completedQuantity);
     setSelectedTask(prev => prev ? { ...prev, completedQuantity } : null);
   };
+
+  // Show loading spinner while auth is loading or if gem user but tasks still loading
+  if (authLoading || (user?.role === 'gem' && tasksLoading)) {
+    return <LoadingSpinner fullScreen text="Loading your dashboard..." />;
+  }
 
   const randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
   const completedTasks = tasks.filter(t => t.status === 'completed').length;
