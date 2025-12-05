@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { collection, query, where, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { Task, TaskStatus, TaskCategory, CommitmentType } from '@/types';
+import { Task, TaskStatus, TaskCategory, CommitmentType, TaskNote } from '@/types';
 import { toast } from '@/hooks/use-toast';
 import { isPast } from 'date-fns';
 
@@ -41,14 +41,22 @@ export const useTasks = (gemIdOrOptions?: string | UseTasksOptions) => {
     }
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const tasksData: Task[] = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        deadline: doc.data().deadline?.toDate() || new Date(),
-        createdAt: doc.data().createdAt?.toDate() || new Date(),
-        updatedAt: doc.data().updatedAt?.toDate() || new Date(),
-        delayedAt: doc.data().delayedAt?.toDate() || undefined,
-      } as Task));
+      const tasksData: Task[] = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          deadline: data.deadline?.toDate() || new Date(),
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+          delayedAt: data.delayedAt?.toDate() || undefined,
+          // Convert taskNotes timestamps
+          taskNotes: data.taskNotes?.map((note: any) => ({
+            ...note,
+            createdAt: note.createdAt?.toDate?.() || new Date(note.createdAt) || new Date(),
+          })) || [],
+        } as Task;
+      });
       setTasks(tasksData);
       setLoading(false);
     }, (error) => {
@@ -154,6 +162,17 @@ export const useTasks = (gemIdOrOptions?: string | UseTasksOptions) => {
       // Admin verified starts as false for new tasks
       if (taskData.clientId) {
         cleanedData.adminVerified = false;
+      }
+      
+      // Add task notes if provided
+      if (taskData.taskNotes && taskData.taskNotes.length > 0) {
+        cleanedData.taskNotes = taskData.taskNotes.map(note => ({
+          id: note.id,
+          type: note.type,
+          content: note.content,
+          label: note.label || '',
+          createdAt: Timestamp.fromDate(note.createdAt instanceof Date ? note.createdAt : new Date(note.createdAt)),
+        }));
       }
       
       await addDoc(collection(db, 'tasks'), cleanedData);
@@ -274,6 +293,19 @@ export const useTasks = (gemIdOrOptions?: string | UseTasksOptions) => {
         updateData.deadline = Timestamp.fromDate(taskData.deadline);
       }
       
+      // Handle taskNotes conversion if provided
+      if (taskData.taskNotes) {
+        updateData.taskNotes = taskData.taskNotes.map(note => ({
+          id: note.id,
+          type: note.type,
+          content: note.content,
+          label: note.label || '',
+          createdAt: note.createdAt instanceof Date 
+            ? Timestamp.fromDate(note.createdAt) 
+            : Timestamp.fromDate(new Date(note.createdAt as any)),
+        }));
+      }
+      
       await updateDoc(doc(db, 'tasks', taskId), updateData);
       
       toast({
@@ -359,6 +391,38 @@ export const useTasks = (gemIdOrOptions?: string | UseTasksOptions) => {
     return tasks.filter(task => categorizeTask(task) === category);
   };
 
+  // Update task notes
+  const updateTaskNotes = async (taskId: string, notes: TaskNote[]) => {
+    try {
+      const formattedNotes = notes.map(note => ({
+        id: note.id,
+        type: note.type,
+        content: note.content,
+        label: note.label || '',
+        createdAt: note.createdAt instanceof Date 
+          ? Timestamp.fromDate(note.createdAt) 
+          : Timestamp.fromDate(new Date(note.createdAt as any)),
+      }));
+      
+      await updateDoc(doc(db, 'tasks', taskId), {
+        taskNotes: formattedNotes,
+        updatedAt: Timestamp.now(),
+      });
+      
+      toast({
+        title: "Notes Updated",
+        description: "Task notes have been updated.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update notes",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   return { 
     tasks, 
     loading, 
@@ -367,6 +431,7 @@ export const useTasks = (gemIdOrOptions?: string | UseTasksOptions) => {
     deleteTask,
     updateTaskStatus,
     updateCompletedQuantity,
+    updateTaskNotes,
     verifyTask,
     categorizeTask,
     getTasksByCategory,

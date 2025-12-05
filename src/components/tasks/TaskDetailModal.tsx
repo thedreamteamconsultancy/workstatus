@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Clock, ExternalLink, Upload, AlertTriangle, CheckCircle2, Loader2, Timer, Building2, Target, ShieldCheck, ShieldOff, Pencil, Trash2, Hash, AlertCircle, HardDrive, FolderSync } from 'lucide-react';
+import { X, Calendar, Clock, ExternalLink, Upload, AlertTriangle, CheckCircle2, Loader2, Timer, Building2, Target, ShieldCheck, ShieldOff, Pencil, Trash2, Hash, AlertCircle, HardDrive, FolderSync, FileText, Link2, Plus, StickyNote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Task, TaskStatus, TaskPriority, Client, getCommitmentUnitLabel } from '@/types';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Task, TaskStatus, TaskPriority, Client, getCommitmentUnitLabel, TaskNote } from '@/types';
 import { format, formatDistanceToNow, isPast, isToday } from 'date-fns';
 import { CountdownTimer } from '@/components/common/CountdownTimer';
 
@@ -17,7 +19,9 @@ interface TaskDetailModalProps {
   onEditTask?: (task: Task) => void;
   onDeleteTask?: (taskId: string) => void;
   onUpdateCompletedQuantity?: (taskId: string, completedQuantity: number) => void;
+  onUpdateTaskNotes?: (taskId: string, notes: TaskNote[]) => void;
   canUpdateStatus?: boolean;
+  canAddNotes?: boolean; // Allow adding notes (for both admin and gem)
   isAdmin?: boolean;
   clients?: Client[];
   gemFixedDriveUrl?: string; // The gem's pre-assigned drive folder URL
@@ -53,12 +57,18 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   onEditTask,
   onDeleteTask,
   onUpdateCompletedQuantity,
+  onUpdateTaskNotes,
   canUpdateStatus = true,
+  canAddNotes = false,
   isAdmin = false,
   clients = [],
   gemFixedDriveUrl
 }) => {
-  const [localCompletedQty, setLocalCompletedQty] = React.useState<number>(0);
+  const [localCompletedQty, setLocalCompletedQty] = useState<number>(0);
+  const [newNoteType, setNewNoteType] = useState<'text' | 'url'>('text');
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [newNoteLabel, setNewNoteLabel] = useState('');
+  const [showAddNote, setShowAddNote] = useState(false);
 
   // Sync local state with task
   React.useEffect(() => {
@@ -66,6 +76,33 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       setLocalCompletedQty(task.completedQuantity || 0);
     }
   }, [task]);
+
+  const handleAddNote = () => {
+    if (!task || !newNoteContent.trim() || !onUpdateTaskNotes) return;
+    
+    const newNote: TaskNote = {
+      id: `note-${Date.now()}`,
+      type: newNoteType,
+      content: newNoteContent.trim(),
+      label: newNoteLabel.trim() || undefined,
+      createdAt: new Date(),
+    };
+    
+    const updatedNotes = [...(task.taskNotes || []), newNote];
+    onUpdateTaskNotes(task.id, updatedNotes);
+    
+    // Reset form
+    setNewNoteContent('');
+    setNewNoteLabel('');
+    setShowAddNote(false);
+  };
+
+  const handleRemoveNote = (noteId: string) => {
+    if (!task || !onUpdateTaskNotes) return;
+    const updatedNotes = (task.taskNotes || []).filter(note => note.id !== noteId);
+    onUpdateTaskNotes(task.id, updatedNotes);
+  };
+
   if (!task) return null;
 
   const deadline = new Date(task.deadline);
@@ -252,24 +289,25 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
                 {/* Drive Mode & Links */}
                 <div className="space-y-3">
-                  {/* Fixed Drive - Show clickable button */}
-                  {(!task.driveMode || task.driveMode === 'fixed') && (
+                  {/* Fixed Drive - Always show if gem has a fixed drive URL */}
+                  {gemFixedDriveUrl && (
                     <div className="flex flex-col gap-2">
-                      {gemFixedDriveUrl ? (
-                        <Button
-                          variant="outline"
-                          className="w-full text-sm bg-emerald-500/10 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/20"
-                          onClick={() => window.open(gemFixedDriveUrl, '_blank')}
-                        >
-                          <HardDrive className="w-4 h-4 mr-2" />
-                          Your Work Drive
-                        </Button>
-                      ) : (
-                        <p className="text-xs text-muted-foreground text-center py-2">
-                          No drive folder assigned. Contact admin to set up your work drive.
-                        </p>
-                      )}
+                      <Button
+                        variant="outline"
+                        className="w-full text-sm bg-emerald-500/10 border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/20"
+                        onClick={() => window.open(gemFixedDriveUrl, '_blank')}
+                      >
+                        <HardDrive className="w-4 h-4 mr-2" />
+                        Your Work Drive
+                      </Button>
                     </div>
+                  )}
+
+                  {/* Show message if no drive URL available */}
+                  {!gemFixedDriveUrl && (!task.driveMode || task.driveMode === 'fixed') && (
+                    <p className="text-xs text-muted-foreground text-center py-2">
+                      No drive folder assigned. Contact admin to set up your work drive.
+                    </p>
                   )}
 
                   {/* Dynamic Drive Links */}
@@ -296,6 +334,117 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         </Button>
                       )}
                     </div>
+                  )}
+                </div>
+
+                {/* Task Notes & URLs Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-2">
+                      <FileText className="w-4 h-4" />
+                      Notes & Links
+                    </h4>
+                    {canAddNotes && onUpdateTaskNotes && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => setShowAddNote(!showAddNote)}
+                      >
+                        <Plus className="w-3.5 h-3.5 mr-1" />
+                        Add
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Add Note Form */}
+                  {showAddNote && canAddNotes && onUpdateTaskNotes && (
+                    <div className="space-y-2 p-3 rounded-lg bg-secondary/30 border border-dashed border-border">
+                      <div className="flex gap-2">
+                        <Select value={newNoteType} onValueChange={(v) => setNewNoteType(v as 'text' | 'url')}>
+                          <SelectTrigger className="w-[90px] h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="text">Note</SelectItem>
+                            <SelectItem value="url">URL</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          placeholder="Label (optional)"
+                          value={newNoteLabel}
+                          onChange={(e) => setNewNoteLabel(e.target.value)}
+                          className="flex-1 h-8 text-sm"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder={newNoteType === 'url' ? 'https://...' : 'Enter note...'}
+                          value={newNoteContent}
+                          onChange={(e) => setNewNoteContent(e.target.value)}
+                          className="flex-1 h-8 text-sm"
+                        />
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="h-8"
+                          onClick={handleAddNote}
+                          disabled={!newNoteContent.trim()}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Display Notes */}
+                  {task.taskNotes && task.taskNotes.length > 0 ? (
+                    <div className="space-y-2">
+                      {task.taskNotes.map((note) => (
+                        <div 
+                          key={note.id}
+                          className={`flex items-start gap-2 p-3 rounded-lg border ${
+                            note.type === 'url' 
+                              ? 'bg-blue-500/5 border-blue-500/20' 
+                              : 'bg-secondary/50 border-border'
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            {note.label && (
+                              <p className="text-xs font-medium text-muted-foreground mb-1">{note.label}</p>
+                            )}
+                            {note.type === 'url' ? (
+                              <Button
+                                variant="link"
+                                className="h-auto p-0 text-sm text-blue-600 hover:text-blue-700 break-all text-left justify-start"
+                                onClick={() => window.open(note.content, '_blank')}
+                              >
+                                <Link2 className="w-3.5 h-3.5 mr-1.5 flex-shrink-0" />
+                                <span className="break-all">{note.content}</span>
+                              </Button>
+                            ) : (
+                              <p className="text-sm text-foreground whitespace-pre-wrap">{note.content}</p>
+                            )}
+                          </div>
+                          {canAddNotes && onUpdateTaskNotes && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive flex-shrink-0"
+                              onClick={() => handleRemoveNote(note.id)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    !showAddNote && (
+                      <p className="text-xs text-muted-foreground text-center py-2">
+                        No notes or links added yet.
+                      </p>
+                    )
                   )}
                 </div>
 

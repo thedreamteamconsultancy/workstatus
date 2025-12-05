@@ -17,7 +17,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useTasks } from '@/hooks/useTasks';
 import { useClients } from '@/hooks/useClients';
-import { Gem, Task, TaskStatus, CommitmentType, TaskPriority } from '@/types';
+import { Gem, Task, TaskStatus, CommitmentType, TaskPriority, TaskNote } from '@/types';
 
 // Key for saving custom messages in localStorage
 const CUSTOM_MESSAGES_KEY = 'workstatus_custom_messages';
@@ -56,7 +56,8 @@ const openWhatsAppChat = (phone: string) => {
 
 const sendCredentialsMessage = (gem: { name: string; email: string; phone: string; password?: string }) => {
   const phoneNumber = formatPhoneNumber(gem.phone);
-  const passwordToSend = getRawPhoneNumber(gem.password || gem.phone);
+  // Use the actual password from the gem record, or fall back to phone number if password not available
+  const passwordToSend = gem.password && gem.password.trim() ? gem.password : getRawPhoneNumber(gem.phone);
   const message = `🌟 *Welcome to the Team, ${gem.name.split(' ')[0]}!* 🌟\n\nWe're thrilled to have you onboard! Your talent and dedication are about to shine. 💎\n\n🔐 *Your Login Credentials*\n\n🌐 Platform: https://workstatus-dts.vercel.app/\n📧 Email: ${gem.email}\n🔑 Password: ${passwordToSend}\n\n✨ Pro Tips:\n• Bookmark the platform link for easy access\n• Keep your credentials safe and private\n• Check your dashboard daily for new tasks\n\nYou've got this! Let's achieve greatness together! 🚀\n\nBest regards,\nThe Dream Team 💜`;
   const encodedMessage = encodeURIComponent(message);
   window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
@@ -98,6 +99,7 @@ const GemPanel: React.FC = () => {
     updateTask,
     deleteTask,
     updateTaskStatus,
+    updateTaskNotes,
     verifyTask
   } = useTasks(gemId);
 
@@ -132,6 +134,7 @@ const GemPanel: React.FC = () => {
     clientId?: string;
     commitmentType?: CommitmentType;
     quantity?: number;
+    taskNotes?: TaskNote[];
   }) => {
     if (!gemId) return;
     
@@ -167,6 +170,7 @@ const GemPanel: React.FC = () => {
     clientId?: string;
     commitmentType?: CommitmentType;
     quantity?: number;
+    taskNotes?: TaskNote[];
   }) => {
     await updateTask(taskId, data);
     setEditTask(null);
@@ -178,6 +182,12 @@ const GemPanel: React.FC = () => {
       setSelectedTask(null);
       setTaskToDelete(task);
     }
+  };
+
+  const handleUpdateTaskNotes = async (taskId: string, notes: TaskNote[]) => {
+    await updateTaskNotes(taskId, notes);
+    // Update local selectedTask state for real-time UI update
+    setSelectedTask(prev => prev ? { ...prev, taskNotes: notes } : null);
   };
 
   const confirmDeleteTask = async () => {
@@ -330,6 +340,8 @@ const GemPanel: React.FC = () => {
         onVerifyTask={handleVerifyTask}
         onEditTask={handleEditTask}
         onDeleteTask={handleDeleteTask}
+        onUpdateTaskNotes={handleUpdateTaskNotes}
+        canAddNotes={true}
         isAdmin={true}
         clients={clients}
         gemFixedDriveUrl={gem?.fixedDriveUrl}

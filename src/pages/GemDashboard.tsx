@@ -42,7 +42,8 @@ const GemDashboard: React.FC = () => {
     futureTasks, 
     pastTasks, 
     updateTaskStatus,
-    updateCompletedQuantity 
+    updateCompletedQuantity,
+    updateTaskNotes
   } = useTasks({ gemId, skipFetch: shouldSkipFetch });
 
   const { clients } = useClients();
@@ -55,6 +56,12 @@ const GemDashboard: React.FC = () => {
   const handleUpdateCompletedQuantity = async (taskId: string, completedQuantity: number) => {
     await updateCompletedQuantity(taskId, completedQuantity);
     setSelectedTask(prev => prev ? { ...prev, completedQuantity } : null);
+  };
+
+  const handleUpdateTaskNotes = async (taskId: string, notes: import('@/types').TaskNote[]) => {
+    await updateTaskNotes(taskId, notes);
+    // Update local selectedTask state for real-time UI update
+    setSelectedTask(prev => prev ? { ...prev, taskNotes: notes } : null);
   };
 
   // Show loading spinner while auth is loading or if gem user but tasks still loading
@@ -155,7 +162,9 @@ const GemDashboard: React.FC = () => {
         onClose={() => setSelectedTask(null)}
         onUpdateStatus={handleUpdateStatus}
         onUpdateCompletedQuantity={handleUpdateCompletedQuantity}
+        onUpdateTaskNotes={handleUpdateTaskNotes}
         canUpdateStatus={true}
+        canAddNotes={true}
         clients={clients}
         gemFixedDriveUrl={currentGem?.fixedDriveUrl}
       />

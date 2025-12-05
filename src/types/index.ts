@@ -61,6 +61,15 @@ export const WORK_TYPES: WorkType[] = [
   'Other',
 ];
 
+// Task Note/URL entry for flexible task-level information
+export interface TaskNote {
+  id: string;
+  type: 'text' | 'url';
+  content: string;
+  label?: string; // Optional label for the note/url
+  createdAt: Date;
+}
+
 export interface Task {
   id: string;
   gemId: string;
@@ -72,6 +81,8 @@ export interface Task {
   driveMode?: DriveMode; // 'fixed' uses gem's pre-assigned folder, 'dynamic' uses custom URLs
   assetUrl?: string;
   uploadUrl?: string;
+  // Task notes and URLs - flexible entries that can be added/edited by admin and gem
+  taskNotes?: TaskNote[];
   // Client linking fields
   clientId?: string;
   commitmentType?: CommitmentType;

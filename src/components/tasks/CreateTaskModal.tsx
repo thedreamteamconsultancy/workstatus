@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, FileText, Calendar, Link, Upload, Building2, Target, Hash, HardDrive, FolderSync } from 'lucide-react';
+import { X, FileText, Calendar, Link, Upload, Building2, Target, Hash, HardDrive, FolderSync, Plus, Trash2, Link2, StickyNote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TaskPriority, Client, CommitmentType, WORK_TYPES, WorkType, Task, DriveMode } from '@/types';
+import { TaskPriority, Client, CommitmentType, WORK_TYPES, WorkType, Task, DriveMode, TaskNote } from '@/types';
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -23,6 +23,7 @@ interface CreateTaskModalProps {
     clientId?: string;
     commitmentType?: CommitmentType;
     quantity?: number;
+    taskNotes?: TaskNote[];
   }) => void;
   gemName: string;
   clients?: Client[];
@@ -43,6 +44,29 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
   const [workType, setWorkType] = useState<WorkType | ''>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [loading, setLoading] = useState(false);
+  
+  // Task notes and URLs
+  const [taskNotes, setTaskNotes] = useState<Array<{ id: string; type: 'text' | 'url'; content: string; label: string }>>([]);
+  const [newNoteType, setNewNoteType] = useState<'text' | 'url'>('text');
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [newNoteLabel, setNewNoteLabel] = useState('');
+
+  const addTaskNote = () => {
+    if (!newNoteContent.trim()) return;
+    const newNote = {
+      id: `note-${Date.now()}`,
+      type: newNoteType,
+      content: newNoteContent.trim(),
+      label: newNoteLabel.trim(),
+    };
+    setTaskNotes([...taskNotes, newNote]);
+    setNewNoteContent('');
+    setNewNoteLabel('');
+  };
+
+  const removeTaskNote = (id: string) => {
+    setTaskNotes(taskNotes.filter(note => note.id !== id));
+  };
 
   // Get selected client to determine available commitment types
   const selectedClient = clients.find(c => c.id === clientId);
@@ -149,6 +173,10 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
         clientId: clientId || undefined,
         commitmentType: commitmentType || undefined,
         quantity: commitmentType ? quantity : undefined,
+        taskNotes: taskNotes.length > 0 ? taskNotes.map(note => ({
+          ...note,
+          createdAt: new Date(),
+        })) : undefined,
       });
       
       // Reset form
@@ -164,6 +192,9 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
       setCommitmentType('');
       setWorkType('');
       setQuantity(1);
+      setTaskNotes([]);
+      setNewNoteContent('');
+      setNewNoteLabel('');
       onClose();
     } catch (error) {
       console.error(error);
@@ -440,6 +471,87 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                       </div>
                     </>
                   )}
+
+                  {/* Task Notes & URLs Section */}
+                  <div className="space-y-3 pt-2 border-t border-border">
+                    <Label className="text-sm flex items-center gap-2">
+                      <StickyNote className="w-4 h-4" />
+                      Notes & Links (Optional)
+                    </Label>
+                    
+                    {/* Existing Notes */}
+                    {taskNotes.length > 0 && (
+                      <div className="space-y-2">
+                        {taskNotes.map((note) => (
+                          <div 
+                            key={note.id}
+                            className={`flex items-start gap-2 p-2 rounded-lg border ${
+                              note.type === 'url' 
+                                ? 'bg-blue-500/5 border-blue-500/20' 
+                                : 'bg-secondary/50 border-border'
+                            }`}
+                          >
+                            <div className="flex-1 min-w-0">
+                              {note.label && (
+                                <p className="text-xs font-medium text-muted-foreground">{note.label}</p>
+                              )}
+                              <p className={`text-sm break-all ${note.type === 'url' ? 'text-blue-600' : 'text-foreground'}`}>
+                                {note.type === 'url' && <Link2 className="w-3 h-3 inline mr-1" />}
+                                {note.content}
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive flex-shrink-0"
+                              onClick={() => removeTaskNote(note.id)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Add New Note Form */}
+                    <div className="space-y-2 p-3 rounded-lg bg-secondary/30 border border-dashed border-border">
+                      <div className="flex gap-2">
+                        <Select value={newNoteType} onValueChange={(v) => setNewNoteType(v as 'text' | 'url')}>
+                          <SelectTrigger className="w-[100px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="text">Note</SelectItem>
+                            <SelectItem value="url">URL</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          placeholder="Label (optional)"
+                          value={newNoteLabel}
+                          onChange={(e) => setNewNoteLabel(e.target.value)}
+                          className="flex-1"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder={newNoteType === 'url' ? 'https://...' : 'Enter note...'}
+                          value={newNoteContent}
+                          onChange={(e) => setNewNoteContent(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="icon"
+                          onClick={addTaskNote}
+                          disabled={!newNoteContent.trim()}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
 
                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     <Button type="button" variant="outline" onClick={onClose} className="flex-1 order-2 sm:order-1">

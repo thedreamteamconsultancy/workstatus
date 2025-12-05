@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, FileText, Calendar, Link, Upload, Building2, Target, Hash, HardDrive, FolderSync } from 'lucide-react';
+import { X, FileText, Calendar, Link, Upload, Building2, Target, Hash, HardDrive, FolderSync, Plus, Trash2, Link2, StickyNote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Task, TaskPriority, Client, CommitmentType, WORK_TYPES, WorkType, DriveMode } from '@/types';
+import { Task, TaskPriority, Client, CommitmentType, WORK_TYPES, WorkType, DriveMode, TaskNote } from '@/types';
 import { format } from 'date-fns';
 
 interface EditTaskModalProps {
@@ -25,6 +25,7 @@ interface EditTaskModalProps {
     clientId?: string;
     commitmentType?: CommitmentType;
     quantity?: number;
+    taskNotes?: TaskNote[];
   }) => void;
   clients?: Client[];
   existingTasks?: Task[]; // To calculate remaining commitments
@@ -45,6 +46,30 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
   const [quantity, setQuantity] = useState<number>(1);
   const [loading, setLoading] = useState(false);
 
+  // Task notes and URLs
+  const [taskNotes, setTaskNotes] = useState<Array<{ id: string; type: 'text' | 'url'; content: string; label: string; createdAt?: Date }>>([]);
+  const [newNoteType, setNewNoteType] = useState<'text' | 'url'>('text');
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [newNoteLabel, setNewNoteLabel] = useState('');
+
+  const addTaskNote = () => {
+    if (!newNoteContent.trim()) return;
+    const newNote = {
+      id: `note-${Date.now()}`,
+      type: newNoteType,
+      content: newNoteContent.trim(),
+      label: newNoteLabel.trim(),
+      createdAt: new Date(),
+    };
+    setTaskNotes([...taskNotes, newNote]);
+    setNewNoteContent('');
+    setNewNoteLabel('');
+  };
+
+  const removeTaskNote = (id: string) => {
+    setTaskNotes(taskNotes.filter(note => note.id !== id));
+  };
+
   // Track if this is initial load to prevent resetting commitment type
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
@@ -64,6 +89,14 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
       setClientId(task.clientId || '');
       setCommitmentType(task.commitmentType || '');
       setQuantity(task.quantity || 1);
+      // Load existing task notes
+      setTaskNotes(task.taskNotes?.map(note => ({
+        id: note.id,
+        type: note.type,
+        content: note.content,
+        label: note.label || '',
+        createdAt: note.createdAt,
+      })) || []);
       // Set work type if title matches a predefined work type
       const matchedWorkType = WORK_TYPES.find(wt => wt === task.title);
       setWorkType(matchedWorkType || '');
@@ -202,6 +235,15 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
         updateData.commitmentType = commitmentType;
         updateData.quantity = quantity;
       }
+
+      // Add task notes
+      (updateData as any).taskNotes = taskNotes.map(note => ({
+        id: note.id,
+        type: note.type,
+        content: note.content,
+        label: note.label || '',
+        createdAt: note.createdAt || new Date(),
+      }));
 
       await onSubmit(task.id, updateData);
       
@@ -483,6 +525,87 @@ export const EditTaskModal: React.FC<EditTaskModalProps> = ({ task, isOpen, onCl
                       </div>
                     </>
                   )}
+
+                  {/* Task Notes & URLs Section */}
+                  <div className="space-y-3 pt-2 border-t border-border">
+                    <Label className="text-sm flex items-center gap-2">
+                      <StickyNote className="w-4 h-4" />
+                      Notes & Links
+                    </Label>
+                    
+                    {/* Existing Notes */}
+                    {taskNotes.length > 0 && (
+                      <div className="space-y-2">
+                        {taskNotes.map((note) => (
+                          <div 
+                            key={note.id}
+                            className={`flex items-start gap-2 p-2 rounded-lg border ${
+                              note.type === 'url' 
+                                ? 'bg-blue-500/5 border-blue-500/20' 
+                                : 'bg-secondary/50 border-border'
+                            }`}
+                          >
+                            <div className="flex-1 min-w-0">
+                              {note.label && (
+                                <p className="text-xs font-medium text-muted-foreground">{note.label}</p>
+                              )}
+                              <p className={`text-sm break-all ${note.type === 'url' ? 'text-blue-600' : 'text-foreground'}`}>
+                                {note.type === 'url' && <Link2 className="w-3 h-3 inline mr-1" />}
+                                {note.content}
+                              </p>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-destructive flex-shrink-0"
+                              onClick={() => removeTaskNote(note.id)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Add New Note Form */}
+                    <div className="space-y-2 p-3 rounded-lg bg-secondary/30 border border-dashed border-border">
+                      <div className="flex gap-2">
+                        <Select value={newNoteType} onValueChange={(v) => setNewNoteType(v as 'text' | 'url')}>
+                          <SelectTrigger className="w-[100px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="text">Note</SelectItem>
+                            <SelectItem value="url">URL</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          placeholder="Label (optional)"
+                          value={newNoteLabel}
+                          onChange={(e) => setNewNoteLabel(e.target.value)}
+                          className="flex-1"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder={newNoteType === 'url' ? 'https://...' : 'Enter note...'}
+                          value={newNoteContent}
+                          onChange={(e) => setNewNoteContent(e.target.value)}
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="icon"
+                          onClick={addTaskNote}
+                          disabled={!newNoteContent.trim()}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
 
                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     <Button type="button" variant="outline" onClick={onClose} className="flex-1 order-2 sm:order-1">
