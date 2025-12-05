@@ -34,14 +34,30 @@ const formatPhoneNumber = (phone: string) => {
   return digits;
 };
 
+// Get raw phone number without country code (for password display)
+const getRawPhoneNumber = (phone: string): string => {
+  const digits = phone.replace(/\D/g, '');
+  // If starts with 91 and is 12 digits, remove the 91 prefix
+  if (digits.startsWith('91') && digits.length === 12) {
+    return digits.substring(2);
+  }
+  // If it's 10 digits, return as-is
+  if (digits.length === 10) {
+    return digits;
+  }
+  // Return original digits if format is unknown
+  return digits;
+};
+
 const openWhatsAppChat = (phone: string) => {
   const phoneNumber = formatPhoneNumber(phone);
   window.open(`https://wa.me/${phoneNumber}`, '_blank');
 };
 
-const sendCredentialsMessage = (gem: { name: string; email: string; phone: string }) => {
+const sendCredentialsMessage = (gem: { name: string; email: string; phone: string; password?: string }) => {
   const phoneNumber = formatPhoneNumber(gem.phone);
-  const message = `🌟 *Welcome to the Team, ${gem.name.split(' ')[0]}!* 🌟\n\nWe're thrilled to have you onboard! Your talent and dedication are about to shine. 💎\n\n🔐 *Your Login Credentials*\n\n🌐 Platform: https://workstatus-dts.vercel.app/\n📧 Email: ${gem.email}\n🔑 Password: ${gem.phone}\n\n✨ Pro Tips:\n• Bookmark the platform link for easy access\n• Keep your credentials safe and private\n• Check your dashboard daily for new tasks\n\nYou've got this! Let's achieve greatness together! 🚀\n\nBest regards,\nThe Dream Team 💜`;
+  const passwordToSend = getRawPhoneNumber(gem.password || gem.phone);
+  const message = `🌟 *Welcome to the Team, ${gem.name.split(' ')[0]}!* 🌟\n\nWe're thrilled to have you onboard! Your talent and dedication are about to shine. 💎\n\n🔐 *Your Login Credentials*\n\n🌐 Platform: https://workstatus-dts.vercel.app/\n📧 Email: ${gem.email}\n🔑 Password: ${passwordToSend}\n\n✨ Pro Tips:\n• Bookmark the platform link for easy access\n• Keep your credentials safe and private\n• Check your dashboard daily for new tasks\n\nYou've got this! Let's achieve greatness together! 🚀\n\nBest regards,\nThe Dream Team 💜`;
   const encodedMessage = encodeURIComponent(message);
   window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
 };
