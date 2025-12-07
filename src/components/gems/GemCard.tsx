@@ -4,7 +4,8 @@ import { Phone, Eye, Trash2, ChevronRight, Pencil, HardDrive, MessageCircle, Sen
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Gem } from '@/types';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Gem, Task } from '@/types';
 
 // Metrics type for gem performance
 interface GemMetrics {
@@ -66,9 +67,23 @@ interface GemCardProps {
   onDelete: (gem: Gem) => void;
   index: number;
   metrics?: GemMetrics;
+  tasks?: Task[];
 }
 
-export const GemCard: React.FC<GemCardProps> = ({ gem, onOpen, onEdit, onDelete, index, metrics }) => {
+export const GemCard: React.FC<GemCardProps> = ({ gem, onOpen, onEdit, onDelete, index, metrics, tasks = [] }) => {
+  // Get tasks by status for tooltips
+  const completedTasks = tasks.filter(t => t.gemId === gem.id && t.status === 'completed');
+  const pendingTasks = tasks.filter(t => t.gemId === gem.id && t.status === 'pending');
+  const ongoingTasks = tasks.filter(t => t.gemId === gem.id && t.status === 'ongoing');
+  const delayedTasks = tasks.filter(t => t.gemId === gem.id && t.status === 'delayed');
+
+  const getTaskTooltip = (taskList: Task[], label: string) => {
+    if (taskList.length === 0) return label;
+    const taskNames = taskList.slice(0, 5).map(t => `• ${t.title}`).join('\n');
+    const more = taskList.length > 5 ? `\n... and ${taskList.length - 5} more` : '';
+    return `${label}:\n${taskNames}${more}`;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -105,28 +120,56 @@ export const GemCard: React.FC<GemCardProps> = ({ gem, onOpen, onEdit, onDelete,
               {metrics && metrics.totalTasks > 0 && (
                 <div className="flex items-center gap-1.5 mb-3 sm:mb-4 flex-wrap">
                   {metrics.completedCount > 0 && (
-                    <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/30 px-1.5 py-0.5">
-                      <CheckCircle className="w-3 h-3 mr-1" />
-                      {metrics.completedCount}
-                    </Badge>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/30 px-1.5 py-0.5 cursor-pointer">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          {metrics.completedCount}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-xs whitespace-pre-line text-left">
+                        {getTaskTooltip(completedTasks, 'Completed Tasks')}
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                   {metrics.pendingCount > 0 && (
-                    <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-600 border-yellow-500/30 px-1.5 py-0.5">
-                      <Clock className="w-3 h-3 mr-1" />
-                      {metrics.pendingCount}
-                    </Badge>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="text-xs bg-yellow-500/10 text-yellow-600 border-yellow-500/30 px-1.5 py-0.5 cursor-pointer">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {metrics.pendingCount}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-xs whitespace-pre-line text-left">
+                        {getTaskTooltip(pendingTasks, 'Pending Tasks')}
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                   {metrics.ongoingCount > 0 && (
-                    <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/30 px-1.5 py-0.5">
-                      <Loader2 className="w-3 h-3 mr-1" />
-                      {metrics.ongoingCount}
-                    </Badge>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/30 px-1.5 py-0.5 cursor-pointer">
+                          <Loader2 className="w-3 h-3 mr-1" />
+                          {metrics.ongoingCount}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-xs whitespace-pre-line text-left">
+                        {getTaskTooltip(ongoingTasks, 'In Progress Tasks')}
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                   {metrics.delayedCount > 0 && (
-                    <Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 border-red-500/30 px-1.5 py-0.5">
-                      <AlertTriangle className="w-3 h-3 mr-1" />
-                      {metrics.delayedCount}
-                    </Badge>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="text-xs bg-red-500/10 text-red-600 border-red-500/30 px-1.5 py-0.5 cursor-pointer">
+                          <AlertTriangle className="w-3 h-3 mr-1" />
+                          {metrics.delayedCount}
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-xs whitespace-pre-line text-left">
+                        {getTaskTooltip(delayedTasks, 'Delayed Tasks')}
+                      </TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               )}

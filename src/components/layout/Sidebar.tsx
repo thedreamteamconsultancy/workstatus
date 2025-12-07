@@ -149,7 +149,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, isMobile = f
       initial={false}
       animate={{ width: isOpen ? 256 : 72 }}
       transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-      className="hidden md:flex flex-col bg-card border-r border-border flex-shrink-0 overflow-hidden"
+      className="hidden md:flex flex-col bg-card border-r border-border flex-shrink-0 overflow-hidden sticky top-[64px] h-[calc(100vh-64px)]"
     >
       <div className="flex flex-col h-full">
         {/* Toggle Button */}

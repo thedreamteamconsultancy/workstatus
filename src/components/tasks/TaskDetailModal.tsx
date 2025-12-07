@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Clock, ExternalLink, Upload, AlertTriangle, CheckCircle2, Loader2, Timer, Building2, Target, ShieldCheck, ShieldOff, Pencil, Trash2, Hash, AlertCircle, HardDrive, FolderSync, FileText, Link2, Plus, StickyNote } from 'lucide-react';
+import { X, Calendar, Clock, ExternalLink, Upload, AlertTriangle, CheckCircle2, Loader2, Timer, Building2, Target, ShieldCheck, ShieldOff, Pencil, Trash2, Hash, AlertCircle, HardDrive, FolderSync, FileText, Link2, Plus, StickyNote, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,6 +20,7 @@ interface TaskDetailModalProps {
   onDeleteTask?: (taskId: string) => void;
   onUpdateCompletedQuantity?: (taskId: string, completedQuantity: number) => void;
   onUpdateTaskNotes?: (taskId: string, notes: TaskNote[]) => void;
+  onMessage?: (task: Task) => void;
   canUpdateStatus?: boolean;
   canAddNotes?: boolean; // Allow adding notes (for both admin and gem)
   isAdmin?: boolean;
@@ -58,6 +59,7 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   onDeleteTask,
   onUpdateCompletedQuantity,
   onUpdateTaskNotes,
+  onMessage,
   canUpdateStatus = true,
   canAddNotes = false,
   isAdmin = false,
@@ -142,6 +144,17 @@ export const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
             <Card variant="elevated" className="border-primary/20 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
               <CardHeader className="relative pb-3 sm:pb-4 p-4 sm:p-6">
                 <div className="absolute right-2 sm:right-4 top-2 sm:top-4 flex items-center gap-1">
+                  {isAdmin && onMessage && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-500/10"
+                      onClick={() => onMessage(task)}
+                      title="Send Message"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                    </Button>
+                  )}
                   {isAdmin && onEditTask && (
                     <Button
                       variant="ghost"

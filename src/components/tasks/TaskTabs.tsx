@@ -11,7 +11,10 @@ interface TaskTabsProps {
   pastTasks: Task[];
   onTaskClick: (task: Task) => void;
   onTaskMessage?: (task: Task) => void;
+  onTaskEdit?: (task: Task) => void;
+  onTaskDelete?: (task: Task) => void;
   showMessageButton?: boolean;
+  showEditDelete?: boolean;
   clients?: Client[];
 }
 
@@ -43,7 +46,10 @@ export const TaskTabs: React.FC<TaskTabsProps> = ({
   pastTasks,
   onTaskClick,
   onTaskMessage,
+  onTaskEdit,
+  onTaskDelete,
   showMessageButton = false,
+  showEditDelete = false,
   clients = [],
 }) => {
   return (
@@ -87,7 +93,10 @@ export const TaskTabs: React.FC<TaskTabsProps> = ({
                 task={task} 
                 onClick={onTaskClick} 
                 onMessage={onTaskMessage}
+                onEdit={onTaskEdit}
+                onDelete={onTaskDelete}
                 showMessageButton={showMessageButton}
+                showEditDelete={showEditDelete}
                 index={index} 
                 clients={clients} 
               />
@@ -107,7 +116,10 @@ export const TaskTabs: React.FC<TaskTabsProps> = ({
                 task={task} 
                 onClick={onTaskClick} 
                 onMessage={onTaskMessage}
+                onEdit={onTaskEdit}
+                onDelete={onTaskDelete}
                 showMessageButton={showMessageButton}
+                showEditDelete={showEditDelete}
                 index={index} 
                 clients={clients} 
               />
@@ -127,7 +139,10 @@ export const TaskTabs: React.FC<TaskTabsProps> = ({
                 task={task} 
                 onClick={onTaskClick} 
                 onMessage={onTaskMessage}
+                onEdit={onTaskEdit}
+                onDelete={onTaskDelete}
                 showMessageButton={showMessageButton}
+                showEditDelete={showEditDelete}
                 index={index} 
                 clients={clients} 
               />

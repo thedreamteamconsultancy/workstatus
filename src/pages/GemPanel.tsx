@@ -326,7 +326,10 @@ const GemPanel: React.FC = () => {
           pastTasks={pastTasks}
           onTaskClick={setSelectedTask}
           onTaskMessage={setMessageTask}
+          onTaskEdit={handleEditTask}
+          onTaskDelete={(task) => handleDeleteTask(task.id)}
           showMessageButton={true}
+          showEditDelete={true}
           clients={clients}
         />
       </motion.div>
@@ -341,6 +344,10 @@ const GemPanel: React.FC = () => {
         onEditTask={handleEditTask}
         onDeleteTask={handleDeleteTask}
         onUpdateTaskNotes={handleUpdateTaskNotes}
+        onMessage={(task) => {
+          setSelectedTask(null);
+          setMessageTask(task);
+        }}
         canAddNotes={true}
         isAdmin={true}
         clients={clients}

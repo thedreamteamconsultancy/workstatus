@@ -34,11 +34,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, showSidebar = true }) 
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background">
       <Header onMenuClick={showSidebar ? toggleSidebar : undefined} />
       
-      <div className="flex-1 flex overflow-hidden">
-        {/* Desktop Sidebar */}
+      <div className="flex">
+        {/* Desktop Sidebar - Fixed position */}
         {showSidebar && (
           <Sidebar 
             isOpen={sidebarOpen} 
@@ -61,7 +61,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, showSidebar = true }) 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="flex-1 overflow-y-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8"
+          className="flex-1 min-h-[calc(100vh-64px)] px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8"
         >
           <div className="max-w-7xl mx-auto">
             {children}

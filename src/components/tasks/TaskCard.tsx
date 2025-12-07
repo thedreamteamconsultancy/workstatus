@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Clock, AlertTriangle, CheckCircle2, Timer, ExternalLink, Building2, ShieldCheck, Hash, MessageCircle } from 'lucide-react';
+import { Clock, AlertTriangle, CheckCircle2, Timer, ExternalLink, Building2, ShieldCheck, Hash, MessageCircle, Pencil, Trash2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,10 +11,13 @@ interface TaskCardProps {
   task: Task;
   onClick: (task: Task) => void;
   onMessage?: (task: Task) => void;
+  onEdit?: (task: Task) => void;
+  onDelete?: (task: Task) => void;
   index: number;
   compact?: boolean;
   clients?: Client[];
   showMessageButton?: boolean;
+  showEditDelete?: boolean;
 }
 
 const priorityConfig: Record<TaskPriority, { icon: React.ReactNode; label: string }> = {
@@ -30,7 +33,7 @@ const statusConfig: Record<TaskStatus, { label: string; variant: 'pending' | 'on
   delayed: { label: 'Delayed', variant: 'delayed' },
 };
 
-export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onMessage, index, compact = false, clients = [], showMessageButton = false }) => {
+export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onMessage, onEdit, onDelete, index, compact = false, clients = [], showMessageButton = false, showEditDelete = false }) => {
   const linkedClient = task.clientId ? clients.find(c => c.id === task.clientId) : null;
   const isCompleted = task.status === 'completed';
 
@@ -93,8 +96,36 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onMessage, in
               )}
             </div>
 
-            {(task.assetUrl || task.uploadUrl || showMessageButton) && (
+            {(task.assetUrl || task.uploadUrl || showMessageButton || showEditDelete) && (
               <div className="flex items-center gap-1">
+                {showEditDelete && onEdit && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 sm:h-7 px-1.5 sm:px-2 text-xs hover:bg-primary/10 text-muted-foreground hover:text-primary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(task);
+                    }}
+                    title="Edit Task"
+                  >
+                    <Pencil className="w-3 h-3" />
+                  </Button>
+                )}
+                {showEditDelete && onDelete && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 sm:h-7 px-1.5 sm:px-2 text-xs hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(task);
+                    }}
+                    title="Delete Task"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                )}
                 {showMessageButton && onMessage && (
                   <Button
                     variant="ghost"

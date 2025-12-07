@@ -319,6 +319,7 @@ const AdminDashboard: React.FC = () => {
               onDelete={setGemToDelete}
               index={index}
               metrics={gemMetrics[gem.id]}
+              tasks={tasks}
             />
           ))}
         </div>
