@@ -20,7 +20,7 @@ interface PredefinedMessage {
   id: string;
   label: string;
   icon: React.ReactNode;
-  getMessage: (gemName: string, taskTitle: string) => string;
+  getMessage: (gemName: string, taskTitle: string, driveUrl?: string) => string;
   variant: 'default' | 'warning' | 'success' | 'info';
 }
 
@@ -32,48 +32,48 @@ const predefinedMessages: PredefinedMessage[] = [
     id: 'status',
     label: 'Ask Status',
     icon: <Clock className="w-4 h-4" />,
-    getMessage: (gemName, taskTitle) => 
-      `Hi ${gemName}! 👋\n\nHope you're doing great! Just wanted to check in on the task "${taskTitle}".\n\nCould you please share a quick update on the progress? Let me know if you need any help!\n\n🔗 *Quick Access:* ${PLATFORM_URL}\n\nThank you! 🙏`,
+    getMessage: (gemName, taskTitle, driveUrl) => 
+      `Hi ${gemName}! 👋\n\nHope you're doing great! Just wanted to check in on the task "${taskTitle}".\n\nCould you please share a quick update on the progress? Let me know if you need any help!\n\n🔗 *Quick Access:* ${PLATFORM_URL}${driveUrl ? `\n📁 *Your Drive:* ${driveUrl}` : ''}\n\nThank you! 🙏`,
     variant: 'info',
   },
   {
     id: 'upload',
     label: 'Request Upload',
     icon: <Upload className="w-4 h-4" />,
-    getMessage: (gemName, taskTitle) => 
-      `Hi ${gemName}! 👋\n\nGreat work on "${taskTitle}"! 🎉\n\nWhen you're ready, please upload the completed work to your designated folder.\n\n🔗 *Quick Access:* ${PLATFORM_URL}\n\nLooking forward to seeing the final result! Keep up the amazing work! ✨`,
+    getMessage: (gemName, taskTitle, driveUrl) => 
+      `Hi ${gemName}! 👋\n\nGreat work on "${taskTitle}"! 🎉\n\nWhen you're ready, please upload the completed work to your designated folder.\n\n🔗 *Quick Access:* ${PLATFORM_URL}${driveUrl ? `\n📁 *Upload Here:* ${driveUrl}` : ''}\n\nLooking forward to seeing the final result! Keep up the amazing work! ✨`,
     variant: 'success',
   },
   {
     id: 'reminder',
     label: 'Gentle Reminder',
     icon: <AlertTriangle className="w-4 h-4" />,
-    getMessage: (gemName, taskTitle) => 
-      `Hi ${gemName}! 👋\n\nJust a friendly reminder about the task "${taskTitle}".\n\nThe deadline is approaching, so please prioritize this when you can. I believe in your ability to deliver quality work! 💪\n\n🔗 *Quick Access:* ${PLATFORM_URL}\n\nLet me know if there's anything blocking you. We're here to help! 🤝`,
+    getMessage: (gemName, taskTitle, driveUrl) => 
+      `Hi ${gemName}! 👋\n\nJust a friendly reminder about the task "${taskTitle}".\n\nThe deadline is approaching, so please prioritize this when you can. I believe in your ability to deliver quality work! 💪\n\n🔗 *Quick Access:* ${PLATFORM_URL}${driveUrl ? `\n📁 *Your Drive:* ${driveUrl}` : ''}\n\nLet me know if there's anything blocking you. We're here to help! 🤝`,
     variant: 'warning',
   },
   {
     id: 'delayed',
     label: 'Delayed Task',
     icon: <AlertTriangle className="w-4 h-4" />,
-    getMessage: (gemName, taskTitle) => 
-      `Hi ${gemName}! 👋\n\n⚠️ The task "${taskTitle}" is now marked as *DELAYED*.\n\nI understand things can get busy, but this task needs immediate attention. Please prioritize this and let me know:\n\n1. What's blocking you?\n2. When can you complete it?\n3. Do you need any help?\n\n🔗 *Quick Access:* ${PLATFORM_URL}\n\nLet's work together to get this done ASAP! I'm here to support you. 💪\n\nPlease update me today. Thank you! 🙏`,
+    getMessage: (gemName, taskTitle, driveUrl) => 
+      `Hi ${gemName}! 👋\n\n⚠️ The task "${taskTitle}" is now marked as *DELAYED*.\n\nI understand things can get busy, but this task needs immediate attention. Please prioritize this and let me know:\n\n1. What's blocking you?\n2. When can you complete it?\n3. Do you need any help?\n\n🔗 *Quick Access:* ${PLATFORM_URL}${driveUrl ? `\n📁 *Your Drive:* ${driveUrl}` : ''}\n\nLet's work together to get this done ASAP! I'm here to support you. 💪\n\nPlease update me today. Thank you! 🙏`,
     variant: 'warning',
   },
   {
     id: 'late',
     label: 'Start Working',
     icon: <Sparkles className="w-4 h-4" />,
-    getMessage: (gemName, taskTitle) => 
-      `Hi ${gemName}! 👋\n\nI noticed the task "${taskTitle}" might need some attention.\n\nNo worries at all - let's get this moving! Please start working on it when you can, and don't hesitate to reach out if you need any clarification or resources.\n\n🔗 *Quick Access:* ${PLATFORM_URL}\n\nYou've got this! 🌟`,
+    getMessage: (gemName, taskTitle, driveUrl) => 
+      `Hi ${gemName}! 👋\n\nI noticed the task "${taskTitle}" might need some attention.\n\nNo worries at all - let's get this moving! Please start working on it when you can, and don't hesitate to reach out if you need any clarification or resources.\n\n🔗 *Quick Access:* ${PLATFORM_URL}${driveUrl ? `\n📁 *Your Drive:* ${driveUrl}` : ''}\n\nYou've got this! 🌟`,
     variant: 'default',
   },
   {
     id: 'appreciation',
     label: 'Appreciation',
     icon: <CheckCircle className="w-4 h-4" />,
-    getMessage: (gemName, taskTitle) => 
-      `Hi ${gemName}! 🌟\n\nJust wanted to say thank you for your excellent work on "${taskTitle}"!\n\nYour dedication and quality really shows. Keep up the fantastic work - you're a valuable part of our team! 🎉\n\n🔗 *Your Dashboard:* ${PLATFORM_URL}\n\nLooking forward to more great things! 💎`,
+    getMessage: (gemName, taskTitle, driveUrl) => 
+      `Hi ${gemName}! 🌟\n\nJust wanted to say thank you for your excellent work on "${taskTitle}"!\n\nYour dedication and quality really shows. Keep up the fantastic work - you're a valuable part of our team! 🎉\n\n🔗 *Your Dashboard:* ${PLATFORM_URL}${driveUrl ? `\n📁 *Your Drive:* ${driveUrl}` : ''}\n\nLooking forward to more great things! 💎`,
     variant: 'success',
   },
 ];
@@ -182,7 +182,7 @@ export const WhatsAppMessageModal: React.FC<WhatsAppMessageModalProps> = ({
                         key={msg.id}
                         variant="outline"
                         className={`h-auto py-2.5 px-3 flex flex-col items-center gap-1 text-xs ${getVariantStyles(msg.variant)}`}
-                        onClick={() => openWhatsApp(msg.getMessage(gem.name.split(' ')[0], task.title))}
+                        onClick={() => openWhatsApp(msg.getMessage(gem.name.split(' ')[0], task.title, gem.fixedDriveUrl))}
                       >
                         {msg.icon}
                         <span>{msg.label}</span>
